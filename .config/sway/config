@@ -1,0 +1,202 @@
+# Set modifier key to alt
+set $mod Mod4
+
+# Example configuration:
+#
+   input "2:8:AlpsPS/2_ALPS_GlidePoint" {
+#       dwt enabled
+       tap enabled
+#       natural_scroll enabled
+#       middle_emulation enabled
+   }
+
+
+# scrot bind
+# fullscreen
+bindsym Print exec "scrot -m '/home/hyperkvm/Pictures/screenshots/%s_%H%M_%d.%m.%Y_$wx$h.png'"
+# 
+bindsym Shift+Print exec "scrot -s '/home/hyperkvm/Pictures/screenshots/%s_%H%M_%d%m%Y_$wx$h.png'"
+bindsym $mod+Shift+Print exec "scrot -u -d 2 '/home/hyperkvm/Pictures/screenshots/%s_%H%M_%d%m%Y_$wx$h.png'"
+
+# notification daemon
+exec --no-startup-id dunst --config 
+
+font pango:Overpass Regular 8
+
+# Press mod key to be able to resize floating windows
+floating_modifier $mod
+
+# Open new terminal
+bindsym $mod+Return exec urxvt
+
+#Close window
+bindsym $mod+Shift+q kill
+
+# Open rofi 
+bindsym $mod+d exec --no-startup-id rofi -show run -modi run -location 1 -width 100 \
+		 -lines 2 -line-margin 0 -line-padding 1 \
+		 -separator-style none -font "mono 10" -columns 9 -bw 0 \
+		 -disable-history \
+		 -hide-scrollbar \
+		 -color-window '#99222222' '#222222' '#a7cff4' \
+		 -color-normal '#222222' '#b1b4b3' '#222222' '#005577' '#b1b4b3' \
+		 -color-active '#222222' '#a7cff4' '#222222' '#007763' '#b1b4b3' \
+		 -color-urgent '#222222' '#b1b4b3' '#222222' '#77003d' '#b1b4b3' \
+		 -kb-row-select "Tab" -kb-row-tab ""
+
+# Change focus
+bindsym $mod+j focus left
+bindsym $mod+k focus down
+bindsym $mod+l focus up
+bindsym $mod+semicolon focus right
+
+# Alternatively, you can use the cursor keys:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# Move focused window
+bindsym $mod+Shift+j move left
+bindsym $mod+Shift+k move down
+bindsym $mod+Shift+l move up
+bindsym $mod+Shift+semicolon move right
+
+# Alternatively, you can use the cursor keys:
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Split in horizontal orientation
+bindsym $mod+h split h
+
+# Split in vertical orientation
+bindsym $mod+v split v
+
+# Enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen toggle
+
+# Change container layout (stacked, tabbed, toggle split)
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# Toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# Change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# Focus the parent container
+bindsym $mod+a focus parent
+
+# Focus the child container
+#bindsym $mod+d focus child
+
+# Switch to workspace
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+bindsym $mod+9 workspace 9
+bindsym $mod+0 workspace 10
+
+# Move focused container to workspace
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+6 move container to workspace 6
+bindsym $mod+Shift+7 move container to workspace 7
+bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+9 move container to workspace 9
+bindsym $mod+Shift+0 move container to workspace 10
+
+# Reload the configuration file
+bindsym $mod+Shift+c reload
+# Restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+bindsym $mod+Shift+r restart
+# Exit sway (logs you out of your Wayland session)
+bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -b 'Yes, exit sway' 'swaymsg exit'"
+
+# Resize window (you can also use the mouse for that)
+mode "resize" {
+        # These bindings trigger as soon as you enter the resize mode
+
+        # Pressing left will shrink the window’s width.
+        # Pressing right will grow the window’s width.
+        # Pressing up will shrink the window’s height.
+        # Pressing down will grow the window’s height.
+        bindsym j resize shrink width 5 px or 5 ppt
+        bindsym k resize grow height 5 px or 5 ppt
+        bindsym l resize shrink height 5 px or 5 ppt
+        bindsym semicolon resize grow width 5 px or 5 ppt
+
+        # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 5 px or 5 ppt
+        bindsym Down resize grow height 5 px or 5 ppt
+        bindsym Up resize shrink height 5 px or 5 ppt
+        bindsym Right resize grow width 5 px or 5 ppt
+
+        # back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bindsym $mod+r mode "resize"
+
+# Start i3bar to display a workspace bar (plus the system information i3status
+# Finds out, if available)
+bar {
+        status_command i3status
+        mode invisible
+}
+
+default_border pixel 2
+
+hide_edge_borders vertical
+
+# Color variables
+set $unfocused_border #1D1F21
+set $focused_border #67b3e6
+
+# class                 border  backgr. text    indicator child_border
+client.focused          #ffffff #ffffff #ffffff #ffffff   $focused_border
+client.focused_inactive #ffffff #ffffff #ffffff #ffffff   $focused_border
+client.unfocused        #ffffff #ffffff #ffffff #ffffff   $unfocused_border
+client.urgent           #ffffff #ffffff #ffffff #ffffff   $focused_border
+client.placeholder      #ffffff #ffffff #ffffff #ffffff   #ffffff
+
+client.background       #ffffff
+
+# Execute polybar on launch. Script kills current ones on i3 refresh, otherwise they duplicate
+exec_always --no-startup-id $HOME/.config/polybar/launch.sh
+
+# Pulse Audio controls
+#bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume $SINK +1% #increase sound volume
+#bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume $SINK -1% #decrease sound volume
+#bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 2 toggle # mute sound
+
+# ALSA Audio Controls
+bindsym XF86AudioRaiseVolume exec amixer sset Master 5%+
+bindsym XF86AudioLowerVolume exec amixer sset Master 5%-
+bindsym XF86AudioMute exec amixer sset Master toggle
+
+# Brightness control
+bindsym XF86MonBrightnessUp exec --no-startup-id xbacklight -inc 5
+bindsym $mod+b exec --no-startup-id xbacklight -inc 5
+bindsym XF86MonBrightnessDown exec --no-startup-id xbacklight -dec 5
+bindsym $mod+n exec --no-startup-id xbacklight -dec 5
+
+# Media player controls
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioPause exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+
