@@ -1,10 +1,14 @@
 #!/bin/sh
-#xrandr --setprovideroutputsource modesetting NVIDIA-0
-#xrandr --auto
+xrandr --setprovideroutputsource modesetting NVIDIA-0
+xrandr --auto
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
 sysresources=/etc/X11/xinit/.Xresources
 sysmodmap=/etc/X11/xinit/.Xmodmap
+
+# Make sure this is before the 'exec' command or it won't be sourced.
+[ -f /etc/xprofile ] && . /etc/xprofile
+[ -f ~/.xprofile ] && . ~/.xprofile
 
 # merge in defaults and keymaps
 
@@ -48,7 +52,6 @@ if [ -d /etc/X11/xinit/xinitrc.d ] ; then
  done
  unset f
 fi
-exec /usr/bin/i3
-#exec /usr/local/bin/dwm
-exec /usr/bin/prime-offload
 
+exec dbus-launch --sh-syntax --exit-with-session dwm
+#exec start-pulseadio-x11

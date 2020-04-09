@@ -1,0 +1,10 @@
+#!/bin/sh
+export DISPLAY=:0
+
+DATE=$(/bin/date +"%a %b %d %H:%M")
+VOLUME="$(amixer get Master | tail -n1 | sed -r 's/.*\[(.*)%\].*/\1/')"  
+BATT=$( acpi -b | sed 's/.*[charging|unknown], \([0-9]*\)%.*/\1/gi' )
+
+ROOT="$DATE BAT:$BATT% VOL:$VOLUME%"
+#echo $ROOT
+xsetroot -name "$ROOT"

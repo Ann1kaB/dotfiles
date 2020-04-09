@@ -5,9 +5,10 @@ static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const char *fonts[]          = { "monospace:size=10" };
-static const char dmenufont[]       = "monospace:size=10";
-#include "/home/hyper-kvm/.cache/wal/colors-wal-dwm.h"
+static const char *fonts[]          = { "Fira Code:size=10", "Noto Sans Symbols2:size=10" };
+static const char dmenufont[]       = "monospace:size=12";
+#include "/home/hyperkvm/.cache/wal/colors-wal-dwm.h"
+#include <X11/XF86keysym.h>
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
@@ -25,7 +26,7 @@ static const Rule rules[] = {
 /* layout(s) */
 static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
-static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
+static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals */
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
@@ -49,7 +50,16 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, NULL };
 static const char *termcmd[]  = { "urxvt", NULL };
-
+static const char *mutecmd[] = { "pactl", "set-sink-mute", "0", "toggle", NULL };
+static const char *volupcmd[] = { "pactl", "set-sink-volume", "0", "+5%", NULL };
+static const char *voldowncmd[] = { "pactl", "set-sink-volume", "0", "-5%", NULL };
+static const char *brupcmd[] = { "xbacklight", "-inc", "5", NULL };
+static const char *brdowncmd[] = { "xbacklight", "-dec", "5", NULL };
+static const char *tracknext[] = { "playerctl", "next", NULL };
+static const char *trackprev[] = { "playerctl", "previous", NULL };
+static const char *trackplaypause[] = { "playerctl", "play-pause", NULL };
+static const char *fullscreenshot[] = { "scrot", "-d", "5", NULL };
+static const char *windowscreenshot[] = { "scrot", "-u", "-d", "5", NULL };
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -72,9 +82,19 @@ static Key keys[] = {
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
 	{ MODKEY,                       XK_comma,  focusmon,       {.i = -1 } },
+	{ MODKEY,			XK_Print, spawn, {.v = windowscreenshot} },
 	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
+	{ 0, 				XF86XK_AudioMute, spawn, {.v = mutecmd } },
+	{ 0, 				XF86XK_AudioLowerVolume, spawn, {.v = voldowncmd } },
+	{ 0, 				XF86XK_AudioRaiseVolume, spawn, {.v = volupcmd } },
+	{ 0, 				XF86XK_MonBrightnessUp, spawn, {.v = brupcmd} },
+	{ 0, 				XF86XK_MonBrightnessDown, spawn, {.v = brdowncmd} },
+	{ 0, 				XF86XK_AudioNext, spawn, {.v = tracknext} },
+	{ 0, 				XF86XK_AudioPrev, spawn, {.v = trackprev} },
+	{ 0, 				XF86XK_AudioPlay, spawn, {.v = trackplaypause} },
+	{ 0,				XK_Print, spawn, {.v = fullscreenshot} },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)

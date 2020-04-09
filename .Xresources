@@ -1,5 +1,5 @@
-*.font: xft:Source Code Pro:size=9, \
-	xft:Noto Sans Symbols2:size=9
+*.font: xft:Fira Code:size=10, \
+	xft:Noto Sans Symbols2:size=10
 
 Xft.dpi:                        96
 Xft.antialias:                  1
@@ -11,14 +11,48 @@ Xft.rgba:                       rgb
 
 URxvt*termName:                 rxvt-unicode-256color
 URxvt.depth:                    32
-URxvt.transparent:		true
-URxvt.shading:			50
-URxvt.blurRadius:		10
 URxvt*lineSpace:                1
 URxvt*geometry:                 65x17
 URxvt.scrollBar:                false
 URxvt*loginShell:               true
-URxvt.internalBorder:           0
+URxvt.internalBorder:           5
 URxvt.perl-ext:	 		default,matcher
 URxvt.url-launcher:             firefox
 URxvt.matcher.button: 		1
+! special
+*.foreground:   #a7b8e9
+*.background:   #000113
+*.cursorColor:  #a7b8e9
+
+! black
+*.color0:       #000113
+*.color8:       #7480a3
+
+! red
+*.color1:       #b40463
+*.color9:       #b40463
+
+! green
+*.color2:       #ef00e5
+*.color10:      #e200d9
+
+! yellow
+*.color3:       #3900ec
+*.color11:      #3600df
+
+! blue
+*.color4:       #0004ed
+*.color12:      #0004f2
+
+! magenta
+*.color5:       #360dd3
+*.color13:      #360dd3
+
+! cyan
+*.color6:       #db41fa
+*.color14:      #db41fa
+
+! white
+*.color7:       #a7b8e9
+*.color15:      #a7b8e9
+
