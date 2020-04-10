@@ -15,7 +15,7 @@ URxvt*lineSpace:                1
 URxvt*geometry:                 65x17
 URxvt.scrollBar:                false
 URxvt*loginShell:               true
-URxvt.internalBorder:           5
+URxvt.internalBorder:           10
 URxvt.perl-ext:	 		default,matcher
 URxvt.url-launcher:             firefox
 URxvt.matcher.button: 		1

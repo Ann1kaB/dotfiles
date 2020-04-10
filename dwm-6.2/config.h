@@ -58,8 +58,10 @@ static const char *brdowncmd[] = { "xbacklight", "-dec", "5", NULL };
 static const char *tracknext[] = { "playerctl", "next", NULL };
 static const char *trackprev[] = { "playerctl", "previous", NULL };
 static const char *trackplaypause[] = { "playerctl", "play-pause", NULL };
-static const char *fullscreenshot[] = { "scrot", "-d", "5", NULL };
-static const char *windowscreenshot[] = { "scrot", "-u", "-d", "5", NULL };
+static const char *fullscreenshot[] = { "scrot", "-e", "'mv $f ~/Pictures/'", "-d", "2", NULL };
+static const char *windowscreenshot[] = { "scrot", "-e", "'mv $f ~/Pictures/'", "-u", "-d", "2", NULL };
+static const char *selscreenshot[] = { "import", "~/Pictures/$(date +'%F_%H_%M_%S').png", NULL };
+static const char *sysinfo[] = { "~/.sysxroot", NULL };
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -82,7 +84,6 @@ static Key keys[] = {
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
 	{ MODKEY,                       XK_comma,  focusmon,       {.i = -1 } },
-	{ MODKEY,			XK_Print, spawn, {.v = windowscreenshot} },
 	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
@@ -95,6 +96,9 @@ static Key keys[] = {
 	{ 0, 				XF86XK_AudioPrev, spawn, {.v = trackprev} },
 	{ 0, 				XF86XK_AudioPlay, spawn, {.v = trackplaypause} },
 	{ 0,				XK_Print, spawn, {.v = fullscreenshot} },
+	{ MODKEY,			XK_Print, spawn, {.v = windowscreenshot} },
+	{ MODKEY|ShiftMask,		XK_Print, spawn, {.v = selscreenshot} },
+	{ MODKEY,			XK_s, spawn, {.v = sysinfo} },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)

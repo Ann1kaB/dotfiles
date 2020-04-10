@@ -4,9 +4,10 @@
 wal -i ~/Pictures/wal/002.png
 xrdb ~/.Xresources
 lxsession &
+node ~/playerctl-firefox-youtube/server.js &
 # time and date in dwm
 while true; do
 	sh .xroot
-        sleep 1s
+        sleep 5s
 done &  
 
