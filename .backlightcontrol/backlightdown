@@ -1,0 +1,4 @@
+#!/bin/sh
+export DISPLAY=:0
+xbacklight -dec 5
+xsetroot -name "BACKLIGHT:$(xbacklight | grep -E -o '\<[0-9]*' | head -n1)%"
