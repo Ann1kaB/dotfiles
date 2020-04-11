@@ -5,4 +5,5 @@ DATE=$(/bin/date +"%b %d %Y %H:%M")
 VOLUME="$(amixer get Master | tail -n1 | sed -r 's/.*\[(.*)%\].*/\1/')"  
 ROOT="$DATE // VOL:$VOLUME%"
 #echo $ROOT
+
 xsetroot -name "${ROOT}"

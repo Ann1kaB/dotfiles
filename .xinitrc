@@ -54,4 +54,3 @@ if [ -d /etc/X11/xinit/xinitrc.d ] ; then
 fi
 
 exec dbus-launch --sh-syntax --exit-with-session dwm
-#exec start-pulseadio-x11

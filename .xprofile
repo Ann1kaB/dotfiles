@@ -4,10 +4,11 @@
 wal -i ~/Pictures/wal/002.png
 xrdb ~/.Xresources
 lxsession &
+start-pulseaudio-x11
 node ~/playerctl-firefox-youtube/server.js &
 # time and date in dwm
+
 while true; do
 	sh .xroot
-        sleep 5s
-done &  
-
+	sleep 15s
+done &
