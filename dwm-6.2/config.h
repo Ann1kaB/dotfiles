@@ -58,10 +58,10 @@ static const char *brdowncmd[] = { "xbacklight", "-dec", "5", NULL };
 static const char *tracknext[] = { "playerctl", "next", NULL };
 static const char *trackprev[] = { "playerctl", "previous", NULL };
 static const char *trackplaypause[] = { "playerctl", "play-pause", NULL };
-static const char *fullscreenshot[] = { "scrot", "-e", "'mv $f ~/Pictures/'", "-d", "2", NULL };
-static const char *windowscreenshot[] = { "scrot", "-e", "'mv $f ~/Pictures/'", "-u", "-d", "2", NULL };
-static const char *selscreenshot[] = { "import", "~/Pictures/$(date +'%F_%H_%M_%S').png", NULL };
-static const char *sysinfo[] = { "~/.sysxroot", NULL };
+static const char *fullscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", "-d", "2", NULL };
+static const char *windowscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", "-u", "-d", "2", NULL };
+static const char *selscreenshot[] = { "./.importscript", NULL };
+static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
