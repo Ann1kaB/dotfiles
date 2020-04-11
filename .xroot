@@ -1,9 +1,9 @@
 #!/bin/sh
 export DISPLAY=:0
 
-DATE=$(/bin/date +"%b %d %Y %H:%M")
+DATE=$(/bin/date +"%A %d, %B // %H:%M // dwm-6.2")
 VOLUME="$(amixer get Master | tail -n1 | sed -r 's/.*\[(.*)%\].*/\1/')"  
-ROOT="$DATE // VOL:$VOLUME%"
+ROOT="$DATE"
 #echo $ROOT
 
 xsetroot -name "${ROOT}"
