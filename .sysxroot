@@ -4,4 +4,5 @@ xsetroot -name "MEM:$(free -h | awk '/^Mem:/ {print $3 "/" $2}' | sed 's/Gi/GB/g
 CPU:$(sensors | awk '/^Package/ {printf "%d\n", $4}' | sed 's/$/°C/') // \
 GPU:$(sensors | awk '/^GPU:/ {printf "%d\n", $2}' | sed 's/$/°C/') // \
 BAT:$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/gi')% // \
-WIFI:$(nmcli dev show wlp3s0 | egrep -o "disconnected|connected" | sed -e 's/\bconnected/ON/;s/disconnected/OFF/')" 
+WIFI:$(nmcli dev show wlp3s0 | egrep -o "disconnected|connected" | sed -e 's/\bconnected/ON/;s/disconnected/OFF/') // \
+BAND:$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4 : $5}' | awk '{print ($1>14)? 5 : $1}' | sed 's/2.4/2.4GHz/;s/5/5GHz/')"
