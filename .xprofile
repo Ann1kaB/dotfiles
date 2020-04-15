@@ -4,7 +4,7 @@
 wal -i ~/Pictures/wal/002.png
 xrdb ~/.Xresources
 lxsession &
-node ~/playerctl-firefox-youtube/server.js &
+#node ~/playerctl-firefox-youtube/server.js &
 dunst &
 # time and date in dwm
 

@@ -2,9 +2,9 @@
 
 xsetroot -name "MEM:$(free -h | awk '/^Mem:/ {print $3 "/" $2}' | sed 's/Gi/GB/g') // \
 CPU:$(sensors | awk '/^Package/ {printf "%d\n", $4}' | sed 's/$/°C/') // \
-GPU:$(optimus-manager --status | egrep -o "intel|nvidia|hybrid" | head -n1 | sed 's/intel/OFF/;s/hybrid/ON/;s/nvdiai/ON/')/\
-$(sensors | awk '/^GPU:/ {printf "%d\n", $2}' | sed 's/$/°C/;s/36../OFF/')/\
-$(nvidia-smi -q | egrep 'Used|Total|Graphics' | awk '/:/ {print $3}' | sed -n '9p;2p;1p' | xargs | awk '{print $2"MB" "/" $1"MB" "/" $3"MHz"}') // \
+GPU:$(sensors | awk '/^GPU:/ {printf "%d\n", $2}' | sed 's/$/°C/' )/\
+$(nvidia-smi -q | egrep 'Used|Total|Graphics' | awk '/:/ {print $3}' | sed -n '9p;2p;1p' | xargs | awk '{print $2"MB" "/" $1"MB" "/" $3"MHz"}' | sed 's/MB\/MB\/MHz/OFF/') // \
 BAT:$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/gi')% // \
 WIFI:$(nmcli dev show wlp3s0 | egrep -o "disconnected|connected" | sed -e 's/\bconnected/ON/;s/disconnected/OFF/')/\
-BAND:$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}')"
+BAND:$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}') \
+LAN:$(nmcli dev show enp2s0 | egrep -o "disconnected|connected" | sed -e 's/\bconnected/ON/;s/disconnected/OFF/')"

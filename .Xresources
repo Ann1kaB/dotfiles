@@ -1,24 +1,14 @@
-*.font: xft:Fira Code:size=10, \
-	xft:Noto Sans Symbols2:size=10
+st.font: Fira Code:pixelsize=12:antialias=true:autohint=true;
 
-Xft.dpi:                        96
-Xft.antialias:                  1
-Xft.autohint:                   1
-Xft.hinting:                    1
-Xft.hintstyle:                  hintslight
-Xft.lcdfilter:                  lcdlight
-Xft.rgba:                       rgb
+st.borderpx: 10
+st.xfps: 120
+st.actionfps: 30
+st.cursorshape: 2
+st.shell: /bin/fish
 
-URxvt*termName:                 rxvt-unicode-256color
-URxvt.depth:                    32
-URxvt*lineSpace:                1
-URxvt*geometry:                 65x17
-URxvt.scrollBar:                false
-URxvt*loginShell:               true
-URxvt.internalBorder:           10
-URxvt.perl-ext:	 		default,matcher
-URxvt.url-launcher:             firefox
-URxvt.matcher.button: 		1
+
+
+*termname:                 st-256color
 ! special
 *.foreground:   #a7b8e9
 *.background:   #000113
@@ -33,8 +23,8 @@ URxvt.matcher.button: 		1
 *.color9:       #b40463
 
 ! green
-*.color2:       #ef00e5
-*.color10:      #e200d9
+*.color2:       #db41fa
+*.color10:      #db41fa
 
 ! yellow
 *.color3:       #3900ec
@@ -49,8 +39,8 @@ URxvt.matcher.button: 		1
 *.color13:      #360dd3
 
 ! cyan
-*.color6:       #db41fa
-*.color14:      #db41fa
+*.color6:       #e200d9
+*.color14:      #e200d9
 
 ! white
 *.color7:       #a7b8e9
