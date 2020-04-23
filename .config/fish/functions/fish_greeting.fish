@@ -1,3 +1,3 @@
 function fish_greeting
-    hyper_kvm
+    hyper_kvm | lolcat
 end
