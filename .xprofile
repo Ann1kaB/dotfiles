@@ -10,5 +10,5 @@ dunst &
 
 while true; do
 	sh .xroot
-	sleep 15s
+	sleep 15
 done &
