@@ -1,5 +1,10 @@
-#!/bin/sh
-export DISPLAY=:0
-pactl set-sink-volume 0 -5%
-xsetroot -name "VOLUME:$(amixer get Master | tail -n1 | sed -r 's/.*\[(.*)%\].*/\1/')%"
+#!/bin/bash
 
+VOLUME='-5%'
+
+xsetroot -name "VOLUME:$(pactl list sinks | egrep "Sink #|State:|Volume:" | awk '/RUNNING/||/Volume:/||/Sink #/ {print $2,$5}' | xargs | egrep -o "RUNNING front-left: ...." | awk '{print $3}')"
+
+for SINK in `pactl list sinks | egrep "Sink #|State:" | sed 's/[[:space:]]//;s/State: //;s/Sink#//' | xargs | sed 's/..IDLE//;s/RUNNING//;s/2 IDLE//'`
+do
+	pactl set-sink-volume $SINK $VOLUME
+done
