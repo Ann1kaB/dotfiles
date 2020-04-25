@@ -62,9 +62,10 @@ static const char *fullscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", 
 static const char *windowscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", "-u", "-d", "2", NULL };
 static const char *selscreenshot[] = { "./.importscript", NULL };
 static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
+static const char *xrandrkey[] = { "./.xrandrconf", NULL };
 static Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
+	{ MODKEY,                       XK_o,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
@@ -95,6 +96,7 @@ static Key keys[] = {
 	{ 0, 				XF86XK_AudioNext, spawn, {.v = tracknext} },
 	{ 0, 				XF86XK_AudioPrev, spawn, {.v = trackprev} },
 	{ 0, 				XF86XK_AudioPlay, spawn, {.v = trackplaypause} },
+	{ MODKEY,			XK_p, spawn, {.v = xrandrkey} },
 	{ 0,				XK_Print, spawn, {.v = fullscreenshot} },
 	{ MODKEY,			XK_Print, spawn, {.v = windowscreenshot} },
 	{ MODKEY|ShiftMask,		XK_Print, spawn, {.v = selscreenshot} },

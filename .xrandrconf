@@ -1,0 +1,28 @@
+#!/bin/bash
+ACTIVE=$(xrandr --listmonitors | awk '{print $4}'| xargs)
+POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
+
+# add outputs here
+DISPLAY1=$(echo $ACTIVE | awk '{print $1}')
+DISPLAY2=$(echo $ACTIVE | awk '{print $2}')
+
+OUTPUT=$(xrandr | awk '{print $1}' | egrep -e "HDMI-*|*.DP*|DP*" | xargs)
+A=$(echo $OUTPUT | awk '{print $1}')
+B=$(echo $OUTPUT | awk '{print $2}')
+         
+# turn off Display 2
+if [[ $DISPLAY1 == $B && $DISPLAY1 != $A ]]; then
+	xrandr --output $A --auto --output $B --off
+# Mirror Displays
+elif [[ $DISPLAY1 == $A && $DISPLAY2 != $B ]]; then
+	xrandr --output $A --auto --output $B --auto --same-as $A
+# Extend to the left
+elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') == "+0+" ]]; then
+	xrandr --output $A --auto --output $B --auto --left-of $A
+# Extend to the right
+elif [[ $(echo $POSITION | awk '{print $1}') != "+0+" && $(echo $POSITION | awk '{print $2}') == "+0+"  ]];then
+	xrandr --output $A --auto --output $B --auto --right-of $A
+# turn off Display 1
+elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') != "+0+" && $DISPLAY2 == $B ]]; then
+	xrandr --output $A --off --output $B --auto
+fi
