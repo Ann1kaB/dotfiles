@@ -11,7 +11,6 @@ sysmodmap=/etc/X11/xinit/.Xmodmap
 [ -f ~/.xprofile ] && . ~/.xprofile
 
 # merge in defaults and keymaps
-
 if [ -f $sysresources ]; then
 
 
@@ -55,3 +54,4 @@ fi
 
 exec dbus-launch --sh-syntax --exit-with-session dwm
 exec --no-startup-id start-pulseaudio-x11
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+while true; do
+	if ! pgrep -x Xorg; then
+		sudo /usr/bin/prime-switch
+		startx
+		exec ~/.prime-switch
+		break
+	fi
+	sleep 10
+done
