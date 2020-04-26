@@ -1,7 +1,10 @@
 #!/bin/sh
-xrandr --setprovideroutputsource modesetting NVIDIA-0
-xrandr --auto
-xrandr --dpi 96
+if [[ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') == "nvidia" ]]; then
+	xrandr --setprovideroutputsource modesetting NVIDIA-0
+	xrandr --auto
+	nvidia-settings --assign CurrentMetaMode="nvidia-auto-select +0+0 { ForceFullCompositionPipeline = On }"
+	xrandr --dpi 96
+fi
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
 sysresources=/etc/X11/xinit/.Xresources

@@ -9,7 +9,7 @@ dunst &
 # time and date in dwm
 
 if [[ $(xrandr | awk '/HDMI-0/ {print $2}') = "connected" ]]; then
-	xrandr --output eDP-1-1 --output HDMI-0 --auto --right-of eDP-1-1
+	xrandr --output eDP-1-1 --output HDMI-0 --auto --left-of eDP-1-1
 fi
 
 while true; do
