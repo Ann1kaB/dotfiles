@@ -1,0 +1,55 @@
+#!/bin/bash
+
+IFS=$'\n'
+
+Downloads="$HOME/Downloads"
+tarballs="$HOME/Downloads/tarballs/"
+ISOs="$HOME/Downloads/ISOs/"
+zips="$HOME/Downloads/zips/"
+pictures="$HOME/Pictures"
+
+for tar in $(find $Downloads -maxdepth 3 -type f | grep ".*.tar.*"); do
+	if [[ ! -d "$tarballs" ]]; then
+		mkdir -p $tarballs
+	fi
+	mv $tar $tarballs
+
+done
+
+for iso in $(find $Downloads -maxdepth 3 -type f | grep ".*.iso.*"); do
+	if [[ ! -d "$ISOs" ]]; then
+		mkdir -p $ISOs
+	fi
+	if [[ ! -e $ISOs/$iso ]]; then
+		mv $iso $ISOs
+	fi
+done
+
+for zip in $(find $Downloads -maxdepth 3 -type f | grep ".*.zip.*"); do
+	if [[ ! -d "$zips" ]]; then
+		mkdir -p $zips
+	fi
+	if [[ ! -e $zips/$zip ]]; then
+		mv $zip $zips
+	fi
+done
+
+for jar in $(find $Downloads -maxdepth 3 -type f | grep ".*.jar.*"); do
+        if [[ ! -d "$jars" ]]; then
+                mkdir -p $jars
+        fi
+	if [[ ! -e $jars/$jar ]]; then
+        	mv $jar $jars
+	fi
+done
+
+for scrot in $(find $pictures -maxdepth 1 -type f | grep ".*.png.*"); do
+        for scrotdir in $(echo $scrot | egrep -o ".*[0-9]{4}-[0-9]{2}-[0-9]{2}" |  tr ' ' '\n' | sort | uniq); do
+                for scrotmv in $(echo $scrot | grep $scrotdir); do
+                        mv $scrotmv $scrotdir
+                if [[ ! -d $scrotdir ]]; then
+                        mkdir $scrotdir
+                fi
+                done
+        done
+done
