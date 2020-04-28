@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DATE=$(/bin/date +"%A %d, %B // %H:%M // dwm-6.2")
+DATE=$(/bin/date +"%A %d, %B // %H:%M %p // dwm-6.2")
 VOLUME="$(amixer get Master | tail -n1 | sed -r 's/.*\[(.*)%\].*/\1/')"  
 ROOT="$DATE"
 #echo $ROOT

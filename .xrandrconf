@@ -1,41 +1,61 @@
 #!/bin/bash
-ACTIVE=$(xrandr --listmonitors | awk '{print $4}'| xargs)
+
+cmd1="xrandr --output"
+cmd2="--auto --output"
+cmd3="--auto --same-as"
+cmd4="--auto --left-of"
+cmd5="--auto --right-of"
+cmd6="--off"
+cmd7="--auto"
+
+
+connected=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;/^\s*$/d')
+
+
+ACTIVE=$(xrandr --listmonitors | awk '{print $4}' | xargs)
+	ACTIVE1=$(echo $ACTIVE | awk '{print $1}')
+	ACTIVE2=$(echo $ACTIVE | awk '{print $2}')
+	ACTIVE3=$(echo $ACTIVE | awk '{print $3}')
+	ACTIVE4=$(echo $ACTIVE | awk '{print $4}')
+
+
+OUTPUTS=$(xrandr | awk '{print $1}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^\\s*$/d')
+OUT1=$(echo $OUTPUTS | xargs | awk '{print $1}')
+OUT2=$(echo $OUTPUTS | xargs | awk '{print $3}')
+OUT3=$(echo $OUTPUTS | xargs | awk '{print $5}')
+OUT4=$(echo $OUTPUTS | xargs | awk '{print $7}')
+
+
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
-OUTPUTS=$(xrandr | awk '{print $1}' | egrep -e "HDMI-*|*.DP*|DP*" | xargs)
 
-# add outputs here
-ACTIVE1=$(echo $ACTIVE | awk '{print $1}')
-ACTIVE2=$(echo $ACTIVE | awk '{print $2}')
 
-# add outputs here also
-OUTPUT1=$(echo $OUTPUTS | awk '{print $1}')
-OUTPUT2=$(echo $OUTPUTS | awk '{print $2}')
-         
-# don't run if not in nvidia mode
-if [[ $(optimus-manager --status | awk '/Current GPU mode/{print $5}') == "nvidia" ]]; then
-	# turn off Display 2
-	if [[ $ACTIVE1 == $OUTPUT2 && $ACTIVE1 != $OUTPUT1 && $(xrandr | grep $OUTPUT1 | awk '{print $2}') == "connected" ]]; then
-		xrandr --output $OUTPUT1 --auto --output $OUTPUT2 --off
+# make sure there are at least 2 available displays first before running
+if [[ $(echo $connected | xargs | awk '{print $2,$3}') == "$OUT1 connected" && $(echo $connected | xargs | awk '{print $4,$5}') == "$OUT2 connected" ]]; then
+	if [[ $ACTIVE1 == $OUT2 && $ACTIVE1 != $OUT1 ]]; then
+		xrandr --output $OUT1 --auto --output $OUT2 --off
 		xsetroot -name "DISPLAY: 1:ON 2:OFF"
 	# Mirror Displays
-	elif [[ $ACTIVE1 == $OUTPUT1 && $ACTIVE2 != $OUTPUT2 && $(xrandr | grep $OUTPUT1 | awk '{print $2}') == "connected" ]]; then
-		xrandr --output $OUTPUT1 --auto --output $OUTPUT2 --auto --same-as $OUTPUT1
+	elif [[ $ACTIVE1 == $OUT1 && $ACTIVE2 != $OUT2 ]]; then
+		xrandr --output $OUT1 --auto --output $OUT2 --auto --same-as $OUT1
 		xsetroot -name "DISPLAY: MIRROR"
 	# Extend to the left
 	elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') == "+0+" ]]; then
-		xrandr --output $OUTPUT1 --auto --output $OUTPUT2 --auto --left-of $OUTPUT1
+		xrandr --output $OUT1 --auto --output $OUT2 --auto --left-of $OUT1
 		xsetroot -name "DISPLAY: EXTEND LEFT"
 	# Extend to the right
 	elif [[ $(echo $POSITION | awk '{print $1}') != "+0+" && $(echo $POSITION | awk '{print $2}') == "+0+"  ]];then
-		xrandr --output $OUTPUT1 --auto --output $OUTPUT2 --auto --right-of $OUTPUT1
+		xrandr --output $OUT1 --auto --output $OUT2 --auto --right-of $OUT1
 		xsetroot -name "DISPLAY: EXTEND RIGHT"
 	# turn off Display 1
-	elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') != "+0+" && $(xrandr | grep $OUTPUT1 | awk '{print $2}') == "connected" ]]; then
-		xrandr --output $OUTPUT1 --off --output $OUTPUT2 --auto
+	elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') != "+0+" && $(xrandr | grep $OUT1 | awk '{print $2}') == "connected" ]]; then
+		xrandr --output $OUT1 --off --output $OUT2 --auto
 		xsetroot -name "DISPLAY: 1:OFF 2:ON"
 	# fallback if something weird happens
 	else
 		xrandr --auto
 		xsetroot -name "ERROR: FALLBACK"
 	fi
+else
+	echo "ERROR: NO SECOND DISPLAY FOUND"
+	echo 
 fi

@@ -13,6 +13,27 @@ sysmodmap=/etc/X11/xinit/.Xmodmap
 [ -f /etc/xprofile ] && . /etc/xprofile
 [ -f ~/.xprofile ] && . ~/.xprofile
 
+wm[0]="dwm"
+wm[1]="bspwm"
+wm[2]="ratpoison"
+wm[3]="openbox"
+wm[4]="stumpwm"
+wm[5]="spectrwm"
+wm[6]="herbsluftwm"
+wm[7]="dtkwm"
+wm[8]="i3"
+wm[9]="xfwm"
+wm[10]="snapwm"
+wm[11]="icewm"
+wm[12]="uwm"
+wm[13]="stumpwm"
+wm[14]="plasma"
+wm[15]=""
+
+rand=$(( $RANDOM % 15 ))
+
+exec ${wm[$rand]}
+
 # merge in defaults and keymaps
 if [ -f $sysresources ]; then
 
