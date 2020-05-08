@@ -3,9 +3,11 @@
 #commands
 CPUTEMP=$(sensors | awk '/^Package/ {printf "%d\n", $4}' | sed 's/$/°C/')
 CPU=$(cpupower frequency-info | awk '/frequency:/ {print $4$5}' | tail -n +3)
-MEM=$(free -h | awk '/^Mem:/ {print $3 "/" $2}' | sed 's/Gi/GB/g')
-GPUTEMP=$(sensors | awk '/^GPU:/ {printf "%d\n", $2}' | sed 's/$/°C/')
-GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics' | awk '/:/ {print $3}' | sed -n '9p;2p;1p' | xargs | awk '{print $2"MB" "/" $1"MB" "/" $3"MHz"}' | sed 's/MB\/MB\/MHz/OFF/')
+MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
+if ! [[ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') == "intel" ]]; then
+	GPUTEMP=$(sensors | awk '/^GPU:/ {printf "%d\n", $2}' | sed 's/$/°C/;s/^/\/GPU:/')
+	GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics' | awk '/:/ {print $3}' | sed -n '9p;2p' | xargs | awk '{print $1"MB/4GB" "/" $2"MHz"}' | sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
+fi
 WIFI=$(nmcli dev wifi | awk '/^*/{print $8"dB"}')
 WIFI2=$(nmcli dev show wlp3s0 | awk '/STATE:/{print $3}' | sed 's/(connected)/ON/;s/(disconnected)/OFF/')
 WIFIBAND=$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}')
@@ -13,25 +15,4 @@ BAT=$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/gi')
 GPUSTAT=$(optimus-manager --status | awk '/^Current GPU mode/{print $5}')
 
 
-if [[ $GPUSTAT == "hybrid" || $GPUSTAT == "nvidia" ]]; then
-	echo "GPU"
-	xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU // GPU:$GPUTEMP/$GPU // BAT:$BAT% // WIFI:$WIFI/$WIFI2/BAND:$WIFIBAND // LAN:$LAN"
-
-elif [[ $WIFI2 == "OFF" ]]; then
-	echo "WIFI OFF"
-	xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU // GPU:$GPUTEMP/$GPU // BAT:$BAT% // LAN:$LAN"
-
-elif [[ $WIFI2 == "OFF" && $GPU == "OFF" ]]; then
-	echo "WIFI OFF, GPU OFF"
-xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU // BAT:$BAT% // LAN:$LAN"
-
-elif [[ $WIFI2 == "OFF" && $GPUSTAT == "nvidia" || $WIFI2 == "OFF" && $GPUSTAT == "hybrid" ]]; then
-	echo "WIFI OFF, GPU OFF"
-xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU // BAT:$BAT% // LAN:$LAN"
-
-else
-	echo "WIFI OFF, GPU OFF"
-xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU // BAT:$BAT% // WIFI:$WIFI/$WIFI2 // LAN:$LAN"
-
-
-fi
+	xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU$GPUTEMP$GPU // BAT:$BAT% // WIFI:$WIFI/$WIFI2/$WIFIBAND"

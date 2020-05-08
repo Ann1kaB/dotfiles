@@ -2,10 +2,12 @@
 
 while true; do
 	if ! pgrep -x Xorg; then
-		sudo /usr/bin/prime-switch
+		sudo python3 -u -m optimus_manager.hooks.pre_xorg_start
 		startx
+		sleep 2
+		sudo python3 -u -m optimus_manager.hooks.post_xorg_start
 		exec ~/.prime-switch
 		break
 	fi
-	sleep 10
+	sleep 30
 done
