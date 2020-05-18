@@ -1,6 +1,6 @@
 #!/bin/bash
 
-xsetroot -name "MUTE:$(pactl list sinks | awk '/State:/{state=$2}/Mute:/ {print $2, state}' | sed 's/yes .*/ON/;s/no .*/OFF/' | head -n1)"
+xsetroot -name "MUTE:$(pactl list sinks | awk '/State:/{state=$2}/Mute:/ {print $2, state}' | sed 's/yes .*/OFF/;s/no .*/ON/' | head -n1)"
 
 for SINK in `pactl list sinks | awk '/Sink / {print $2}' | sed 's/#//'`
 do

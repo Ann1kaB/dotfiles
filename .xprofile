@@ -1,11 +1,13 @@
 #!/bin/bash
 
 # restore the background
+pulseaudio &
 wal -i ~/Pictures/wal/002.png
 xrdb ~/.Xresources
-lxsession &
 #node ~/playerctl-firefox-youtube/server.js &
+lxsession &
 dunst &
+xgamma -gamma 0.8 &
 # time and date in dwm
 
 if [[ $(xrandr | awk '/HDMI-0/ {print $2}') = "connected" ]]; then
