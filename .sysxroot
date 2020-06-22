@@ -1,18 +1,19 @@
 #!/bin/sh
 
 #commands
-CPUTEMP=$(sensors | awk '/^Package/ {printf "%d\n", $4}' | sed 's/$/°C/')
+CPUTEMP=$(sensors | awk '/^temp1:/ {printf "%d\n", $2}' | sed 's/$/°C/')
 CPU=$(cpupower frequency-info | awk '/frequency:/ {print $4$5}' | tail -n +3)
 MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
-if ! [[ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') == "intel" ]]; then
-	GPUTEMP=$(sensors | awk '/^GPU:/ {printf "%d\n", $2}' | sed 's/$/°C/;s/^/\/GPU:/')
-	GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics' | awk '/:/ {print $3}' | sed -n '9p;2p' | xargs | awk '{print $1"MB/4GB" "/" $2"MHz"}' | sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
-fi
-WIFI=$(nmcli dev wifi | awk '/^*/{print $8"dB"}')
+#if [ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') != "igpu" ] ; then # technically not required anymore with turing GPUs.
+GPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $6}' | sed 's/C/°C/')
+GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics|Power Draw' | awk '/:/ {print $3,$4}' | sed -n '8p;2p;6p;5p' | xargs | awk '{print $1"MB/4GB" "/" $5"MHz" "/" $4"W"}' | sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
+#fi
+# WIFI=$(nmcli dev wifi | awk '/^*/{print $8"dB"}')
 WIFI2=$(nmcli dev show wlp3s0 | awk '/STATE:/{print $3}' | sed 's/(connected)/ON/;s/(disconnected)/OFF/')
-WIFIBAND=$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}')
+# seems to cause issues on new laptop rtl8822ce driver, so disabled for now.
+# WIFIBAND=$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}')
 BAT=$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/gi')
 GPUSTAT=$(optimus-manager --status | awk '/^Current GPU mode/{print $5}')
 
 
-	xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU$GPUTEMP$GPU // BAT:$BAT% // WIFI:$WIFI/$WIFI2/$WIFIBAND"
+	xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU/GPU:$GPUTEMP$GPU // BAT:$BAT% // WIFI:$WIFI2"

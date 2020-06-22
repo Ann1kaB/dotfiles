@@ -1,7 +1,8 @@
 #!/bin/sh
 
+BAT=$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/gi')
 DATE=$(/bin/date +"%A %d, %B // %H:%M %p // dwm-6.2")
-ROOT="$DATE"
+ROOT="$DATE // BAT:$BAT%"
 #echo $ROOT
 
 xsetroot -name "${ROOT}"

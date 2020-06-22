@@ -45,30 +45,31 @@ static const Layout layouts[] = {
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-/* commands */
+//commands
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, NULL };
 static const char *termcmd[]  = { "st", NULL };
-/* volume control */
+//volume control
 static const char *mutecmd[] = { "./.volcontrol/mute", NULL };
 static const char *volupcmd[] = { "./.volcontrol/volup", NULL };
 static const char *voldowncmd[] = { "./.volcontrol/voldown", NULL };
-/* brightness control */
+//brightness control 
 static const char *brupcmd[] = { "./.backlightcontrol/backlightup", NULL };
 static const char *brdowncmd[] = { "./.backlightcontrol/backlightdown", NULL };
-/* media control */
+//media control
 static const char *tracknext[] = { "playerctl", "next", NULL };
 static const char *trackprev[] = { "playerctl", "previous", NULL };
 static const char *trackplaypause[] = { "playerctl", "play-pause", NULL };
-/* screenshot control */
+//screenshot control
 static const char *fullscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", "-d", "2", NULL };
 static const char *windowscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", "-u", "-d", "2", NULL };
 static const char *selscreenshot[] = { "./.importscript", NULL };
-/* system info */
+//system info
+static const char *fanmode[] = { "./.fanmode", NULL };
 static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
 static const char *xrandrkey[] = { "./.xrandrconf", NULL };
-/* screen lock */
-static const char *slock[] = { "slock", NULL };
+//screen lock
+//static const char *slock[] = { "slock", NULL };
 static Key keys[] = {
 	/* modifier                     key        			function        argument */
 	{ MODKEY,                       XK_o,      			spawn,          {.v = dmenucmd } },
@@ -96,6 +97,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_Return, 			spawn,		{.v = termcmd } },
 	{ MODKEY,			XK_p, 				spawn, 		{.v = xrandrkey} },
 	{ MODKEY,			XK_s, 				spawn, 		{.v = sysinfo} },
+	{ MODKEY,			XK_F5,				spawn,		{.v = fanmode} },
 	{ 0, 				XF86XK_AudioMute, 		spawn, 		{.v = mutecmd } },
 	{ 0, 				XF86XK_AudioLowerVolume, 	spawn, 		{.v = voldowncmd } },
 	{ 0, 				XF86XK_AudioRaiseVolume, 	spawn, 		{.v = volupcmd } },

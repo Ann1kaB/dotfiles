@@ -1,5 +1,5 @@
 #!/bin/bash
-
+prime-offload
 # restore the background
 pulseaudio &
 wal -i ~/Pictures/wal/002.png
@@ -7,7 +7,11 @@ xrdb ~/.Xresources
 #node ~/playerctl-firefox-youtube/server.js &
 lxsession &
 dunst &
-xgamma -gamma 0.8 &
+if [ $(optimus-manager -- status | awk '/^Current GPU mode/{print $5}') == "nvidia" ]; then
+	xrandr --output eDP-1-1 --gamma 0.8:0.8:0.8 &
+else
+	xgamma -gamma 0.8 &
+fi
 # time and date in dwm
 
 if [[ $(xrandr | awk '/HDMI-0/ {print $2}') = "connected" ]]; then
