@@ -5,7 +5,7 @@ CPUTEMP=$(sensors | awk '/^temp1:/ {printf "%d\n", $2}' | sed 's/$/°C/')
 CPU=$(cpupower frequency-info | awk '/frequency:/ {print $4$5}' | tail -n +3)
 MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
 #if [ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') != "igpu" ] ; then # technically not required anymore with turing GPUs.
-GPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $6}' | sed 's/C/°C/')
+GPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $7}' | sed 's/C/°C/')
 GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics|Power Draw' | awk '/:/ {print $3,$4}' | sed -n '8p;2p;6p;5p' | xargs | awk '{print $1"MB/4GB" "/" $5"MHz" "/" $4"W"}' | sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
 #fi
 # WIFI=$(nmcli dev wifi | awk '/^*/{print $8"dB"}')
