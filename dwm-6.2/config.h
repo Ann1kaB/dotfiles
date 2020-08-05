@@ -1,7 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int borderpx  = 1;        /* border pixel of windows */
+static const unsigned int borderpx  = 0;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
@@ -69,7 +69,7 @@ static const char *fanmode[] = { "./.fanmode", NULL };
 static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
 static const char *xrandrkey[] = { "./.xrandrconf", NULL };
 //screen lock
-//static const char *slock[] = { "slock", NULL };
+static const char *setslock[] = { "slock", "NULL" };
 static Key keys[] = {
 	/* modifier                     key        			function        argument */
 	{ MODKEY,                       XK_o,      			spawn,          {.v = dmenucmd } },
@@ -109,6 +109,7 @@ static Key keys[] = {
 	{ 0,				XK_Print, 			spawn, 		{.v = fullscreenshot} },
 	{ MODKEY,			XK_Print, 			spawn, 		{.v = windowscreenshot} },
 	{ MODKEY|ShiftMask,		XK_Print, 			spawn, 		{.v = selscreenshot} },
+	{ MODKEY|ShiftMask,		XK_l,				spawn,		{.v = setslock} },
 	TAGKEYS(                        XK_1,                      			0)
 	TAGKEYS(                        XK_2,                      			1)
 	TAGKEYS(                        XK_3,                      			2)

@@ -1,8 +1,13 @@
 #!/bin/sh
 
-BAT=$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/gi')
 DATE=$(/bin/date +"%A %d, %B // %H:%M %p // dwm-6.2")
-ROOT="$DATE // BAT:$BAT%"
+BAT=$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/g'| tail -n 1)
+if [ ! -d /sys/class/power_supply/sony_controller_battery_dc:af:68:2c:51:d5/ ]; then
+	ROOT="$DATE // BAT:$BAT%"
+else
+	DS4BAT=$(cat "/sys/class/power_supply/sony_controller_battery_dc:af:68:2c:51:d5/capacity")
+	ROOT="$DATE // BAT:$BAT% DS4:$DS4BAT%"
+fi
 #echo $ROOT
 
 xsetroot -name "${ROOT}"

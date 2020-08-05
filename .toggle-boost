@@ -1,0 +1,26 @@
+#!/bin/bash
+# set lang for english commands
+export LANG=en_US.UTF-8
+boost_enable() {
+  if [ $(lscpu | awk '/^Vendor/{print $3}') == "AuthenticAMD" ]; then
+    echo 1 | sudo tee /sys/devices/system/cpu/cpufreq/boost
+  fi
+  if [ -e /sys/devices/system/cpu/intel_pstate ]; then
+    echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate
+  fi
+  exit
+}
+trap boost_enable SIGINT EXIT
+
+$1 &
+if [[ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') != "igpu" ]]; then
+  while  [ -e /proc/$! ]; do
+    if [ $(lscpu | awk '/^Vendor/{print $3}') == "AuthenticAMD" ]; then
+      echo 0 | sudo tee /sys/devices/system/cpu/cpufreq/boost > /dev/null
+    fi
+    if [ -e /sys/devices/system/cpu/intel_pstate ]; then
+      echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate
+    fi
+    sleep 10
+  done
+fi
