@@ -7,6 +7,7 @@ xrdb ~/.Xresources
 #node ~/playerctl-firefox-youtube/server.js &
 lxsession &
 dunst &
+xss-lock -n /usr/share/doc/xss-lock/dim-screen.sh -- slock &
 if [ $(optimus-manager -- status | awk '/^Current GPU mode/{print $5}') == "nvidia" ]; then
 	xrandr --output eDP-1-1 --gamma 0.8:0.8:0.8 &
 else

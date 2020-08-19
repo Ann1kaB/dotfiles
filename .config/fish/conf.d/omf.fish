@@ -8,5 +8,4 @@ source $OMF_PATH/init.fish
 alias mpv="mpv --force-window --idle --hwdec -v"
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias prime-run='__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia'
-alias deboost='./.toggle-boost'
 alias startx='startx; ./.prime-switch'
