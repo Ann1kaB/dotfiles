@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import sys
 import time
 
 path = "/sys/class/power_supply/"
@@ -9,19 +8,24 @@ for i in os.listdir(path):
         bat = i
 batpath = path + bat
 percent_path = batpath + "/capacity"
-status = open("/sys/class/power_supply/%s/status" % bat).read().rsplit('\n')[0]
 
 def shutdown():
-    i = 61
+    i = 60
     while i > 0:
-        i = i - 1
+        status = open("/sys/class/power_supply/%s/status" % bat).read().rsplit('\n')[0]
         os.popen("notify-send \"LOW BATTERY, SHUTTING DOWN IN %d SECONDS.\"" % i)
         time.sleep(1)
+        i = i - 1
+        if status == "Charging":
+            run_check()
     os.popen("poweroff")
 
-while True:
-    f=open(percent_path, 'r')
-    # battery percent here to shutdown
-    if int(f.read().rstrip('\n')) < 35 and status == "Discharging":
-        shutdown()
-    time.sleep(900)
+def run_check():
+    while True:
+        status = open("/sys/class/power_supply/%s/status" % bat).read().rsplit('\n')[0]
+        f=open(percent_path, 'r')
+        # battery percent here to shutdown
+        if int(f.read().rstrip('\n')) < 15 and status == "Discharging":
+            shutdown()
+        time.sleep(900)
+run_check()
