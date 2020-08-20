@@ -1,6 +1,5 @@
 #!/bin/bash
 prime-offload
-# restore the background
 pulseaudio &
 wal -i ~/Pictures/wal/002.png
 xrdb ~/.Xresources
@@ -8,12 +7,10 @@ xrdb ~/.Xresources
 lxsession &
 dunst &
 xss-lock -n /usr/share/doc/xss-lock/dim-screen.sh -- slock &
-if [ $(optimus-manager -- status | awk '/^Current GPU mode/{print $5}') == "nvidia" ]; then
-	xrandr --output eDP-1-1 --gamma 0.8:0.8:0.8 &
-else
-	xgamma -gamma 0.8 &
-fi
-# time and date in dwm
+	
+# if statment doesn't work because fuck you
+xrandr --output eDP-1-0 --gamma 0.8:0.8:0.8 &
+xgamma -gamma 0.8 &
 
 if [[ $(xrandr | awk '/HDMI-0/ {print $2}') = "connected" ]]; then
 	xrandr --output eDP-1-1 --output HDMI-0 --auto --left-of eDP-1-1
