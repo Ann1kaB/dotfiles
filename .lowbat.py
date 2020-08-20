@@ -22,10 +22,9 @@ def shutdown():
 
 def run_check():
     while True:
-        status = open("/sys/class/power_supply/%s/status" % bat).read().rsplit('\n')[0]
         f=open(percent_path, 'r')
         # battery percent here to shutdown
-        if int(f.read().rstrip('\n')) < 15 and status == "Discharging":
+        if int(f.read().rstrip('\n')) < 15:
             shutdown()
         time.sleep(900)
 run_check()
