@@ -1,0 +1,55 @@
+#!/bin/bash
+
+STATUS=$(cat /sys/class/power_supply/BAT1/status)
+
+if [[ $STATUS == "Discharging" ]]; then
+	case $(cat tdp) in
+		"TDP1")
+		# TDP 2
+		ryzenadj --stapm-limit=35000 --fast-limit=40000 --slow-limit=30000 --tctl-temp=85 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 30W"
+		echo TDP2 > tdp
+		;;
+		"TDP2")
+		# TDP 1
+		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000 --tctl-temp=80 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 25W"
+		echo TDP1 > tdp
+		;;
+		*)
+		# TDP 1
+		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000 --tctl-temp=80 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 25W"
+		echo TDP1 > tdp
+		;;
+	esac
+
+elif [[ $STATUS == "Charging" || $STATUS == "Fully Charged" ]]; then
+	case $(cat tdp) in
+		"TDP1")
+		# TDP 2
+		ryzenadj --stapm-limit=35000 --fast-limit=40000 --slow-limit=30000 --tctl-temp=85 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 30W"
+		echo TDP2 > tdp
+		;;
+		"TDP2")
+		# TDP 3
+		ryzenadj --stapm-limit=50000 --fast-limit=55000 --slow-limit=45000 --tctl-temp=90 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 45W"
+		echo TDP3 > tdp
+		;;
+		"TDP3")
+		# TDP 4
+		ryzenadj --stapm-limit=60000 --fast-limit=65000 --slow-limit=55000 --tctl-temp=95 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 55W"
+		echo TDP4 > tdp
+		;;
+		*)
+		# TDP 1
+		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000 --tctl-temp=80 --vrmmax-current=40000
+		xsetroot -name "Setting TDP to 25W"
+		echo TDP1 > tdp
+		;;
+	esac
+
+fi

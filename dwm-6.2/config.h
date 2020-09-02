@@ -68,6 +68,8 @@ static const char *selscreenshot[] = { "./.importscript", NULL };
 static const char *fanmode[] = { "./.fanmode", NULL };
 static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
 static const char *xrandrkey[] = { "./.xrandrconf", NULL };
+//TDP switch
+static const char *tdpswitch[] = { "sudo", "./.set-tdp/set-tdp", NULL };
 //screen lock
 static const char *setslock[] = { "slock", "NULL" };
 static Key keys[] = {
@@ -98,6 +100,7 @@ static Key keys[] = {
 	{ MODKEY,			XK_p, 				spawn, 		{.v = xrandrkey} },
 	{ MODKEY,			XK_s, 				spawn, 		{.v = sysinfo} },
 	{ MODKEY,			XK_F5,				spawn,		{.v = fanmode} },
+	{ MODKEY,			XK_slash,			spawn,		{.v = tdpswitch} },
 	{ 0, 				XF86XK_AudioMute, 		spawn, 		{.v = mutecmd } },
 	{ 0, 				XF86XK_AudioLowerVolume, 	spawn, 		{.v = voldowncmd } },
 	{ 0, 				XF86XK_AudioRaiseVolume, 	spawn, 		{.v = volupcmd } },
