@@ -24,7 +24,7 @@ if [[ $STATUS == "Discharging" ]]; then
 		;;
 	esac
 
-elif [[ $STATUS == "Charging" || $STATUS == "Fully Charged" ]]; then
+elif [[ $STATUS == "Charging" || $STATUS == "Full" ]]; then
 	case $(cat tdp) in
 		"TDP1")
 		# TDP 2
