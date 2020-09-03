@@ -97,7 +97,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_space,  			togglefloating, {0} },
 	{ MODKEY|ShiftMask,             XK_0,      			tag,            {.ui = ~0 } },
 	{ MODKEY|ShiftMask,             XK_Return, 			spawn,		{.v = termcmd } },
-	{ MODKEY,			XK_p, 				spawn, 		{.v = xrandrkey} },
+	{ MODKEY,			XK_F9, 				spawn, 		{.v = xrandrkey} },
 	{ MODKEY,			XK_s, 				spawn, 		{.v = sysinfo} },
 	{ MODKEY,			XK_F5,				spawn,		{.v = fanmode} },
 	{ MODKEY,			XK_t,				spawn,		{.v = tdpswitch} },

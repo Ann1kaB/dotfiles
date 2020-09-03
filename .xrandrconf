@@ -10,16 +10,17 @@ ACTIVE2=$(echo $ACTIVE | awk '{print $2}')
 ACTIVE3=$(echo $ACTIVE | awk '{print $3}')
 ACTIVE4=$(echo $ACTIVE | awk '{print $4}')
 
+OUTPUTS=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^\s*$/d' | egrep -o "^\S*")
 
-OUTPUTS=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^\s*$/d' | egrep -o "$ACTIVE1 connected|$ACTIVE2 connected|$ACTIVE3 connected|$ACTIVE4 connected")
 OUT1=$(echo $OUTPUTS | xargs | awk '{print $1}')
-OUT2=$(echo $OUTPUTS | xargs | awk '{print $3}')
-OUT3=$(echo $OUTPUTS | xargs | awk '{print $5}')
-OUT4=$(echo $OUTPUTS | xargs | awk '{print $7}')
-
+OUT2=$(echo $OUTPUTS | xargs | awk '{print $2}')
+OUT3=$(echo $OUTPUTS | xargs | awk '{print $3}')
+OUT4=$(echo $OUTPUTS | xargs | awk '{print $4}')
 
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
+POS1=$(echo $POSITION | awk '{print $1}')
+POS2=$(echo $POSITION | awk '{print $2}')
 
 if [[ -n $OUT2 ]]; then
 	if [[ $ACTIVE1 == $OUT2 && $ACTIVE1 != $OUT1 ]]; then
@@ -30,19 +31,20 @@ if [[ -n $OUT2 ]]; then
         	xrandr --output $OUT1 --auto --output $OUT2 --auto --same-as $OUT1
         	xsetroot -name "DISPLAY: MIRROR"
 	# Extend to the left
-        elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') == "+0+" ]]; then
+        elif [[ $POS1 == "+0+" && $POS2 == "+0+" ]]; then
                 xrandr --output $OUT1 --auto --output $OUT2 --auto --left-of $OUT1
                 xsetroot -name "DISPLAY: EXTEND LEFT"
         # Extend to the right
-        elif [[ $(echo $POSITION | awk '{print $1}') != "+0+" && $(echo $POSITION | awk '{print $2}') == "+0+"  ]];then
+        elif [[ $POS1 != "+0+" && $POS2 == "+0+"  ]];then
                 xrandr --output $OUT1 --auto --output $OUT2 --auto --right-of $OUT1
                 xsetroot -name "DISPLAY: EXTEND RIGHT"
         # turn off Display 1
-        elif [[ $(echo $POSITION | awk '{print $1}') == "+0+" && $(echo $POSITION | awk '{print $2}') != "+0+" && $(xrandr | grep $OUT1 | awk '{print $2}') == "connected" ]]; then
+        elif [[ $POS1 == "+0+" && $POS2 != "+0+" && $(xrandr | grep $OUT1 | awk '{print $2}') == "connected" ]]; then
         	xrandr --output $OUT1 --off --output $OUT2 --auto
              	xsetroot -name "DISPLAY: 1:OFF 2:ON"
 	# fallback if something weird happens
 	else
         	xrandr --auto
               	xsetroot -name "ERROR: FALLBACK"
+	fi
 fi
