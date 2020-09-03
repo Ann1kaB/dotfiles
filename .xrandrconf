@@ -1,50 +1,41 @@
 #!/bin/bash
 
-
 IFS=$'\n'
 
-
 ACTIVE=$(xrandr --listmonitors | awk '{print $4}' | xargs)
+
 ACTIVE1=$(echo $ACTIVE | awk '{print $1}')
 ACTIVE2=$(echo $ACTIVE | awk '{print $2}')
-ACTIVE3=$(echo $ACTIVE | awk '{print $3}')
-ACTIVE4=$(echo $ACTIVE | awk '{print $4}')
 
 OUTPUTS=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^\s*$/d' | egrep -o "^\S*")
 
 OUT1=$(echo $OUTPUTS | xargs | awk '{print $1}')
 OUT2=$(echo $OUTPUTS | xargs | awk '{print $2}')
-OUT3=$(echo $OUTPUTS | xargs | awk '{print $3}')
-OUT4=$(echo $OUTPUTS | xargs | awk '{print $4}')
 
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
 POS1=$(echo $POSITION | awk '{print $1}')
 POS2=$(echo $POSITION | awk '{print $2}')
 
-if [[ -n $OUT2 ]]; then
-	if [[ $ACTIVE1 == $OUT2 && $ACTIVE1 != $OUT1 ]]; then
-                xrandr --output $OUT1 --auto --output $OUT2 --off
-                xsetroot -name "DISPLAY: 1:ON 2:OFF"
-        # Mirror Displays
-        elif [[ $ACTIVE1 == $OUT1 && $ACTIVE2 != $OUT2 ]]; then
-        	xrandr --output $OUT1 --auto --output $OUT2 --auto --same-as $OUT1
-        	xsetroot -name "DISPLAY: MIRROR"
-	# Extend to the left
-        elif [[ $POS1 == "+0+" && $POS2 == "+0+" ]]; then
-                xrandr --output $OUT1 --auto --output $OUT2 --auto --left-of $OUT1
-                xsetroot -name "DISPLAY: EXTEND LEFT"
-        # Extend to the right
-        elif [[ $POS1 != "+0+" && $POS2 == "+0+"  ]];then
-                xrandr --output $OUT1 --auto --output $OUT2 --auto --right-of $OUT1
-                xsetroot -name "DISPLAY: EXTEND RIGHT"
-        # turn off Display 1
-        elif [[ $POS1 == "+0+" && $POS2 != "+0+" && $(xrandr | grep $OUT1 | awk '{print $2}') == "connected" ]]; then
-        	xrandr --output $OUT1 --off --output $OUT2 --auto
-             	xsetroot -name "DISPLAY: 1:OFF 2:ON"
-	# fallback if something weird happens
-	else
-        	xrandr --auto
-              	xsetroot -name "ERROR: FALLBACK"
-	fi
-fi
+case "$ACTIVE1 $ACTIVE2 $POS1 $POS2" in
+	"$OUT1 $OUT2 +0+ +0+")
+	xrandr --output $OUT1 --auto --output $OUT2 --auto --left-of $OUT1
+        xsetroot -name "DISPLAY: EXTEND LEFT"
+	;;
+	"$OUT1 $OUT2 +1920+ +0+")
+	xrandr --output $OUT1 --auto --output $OUT2 --auto --right-of $OUT1
+        xsetroot -name "DISPLAY: EXTEND RIGHT"
+	;;
+	"$OUT1 $OUT2 +0+ +1920+")
+	xrandr --output $OUT1 --off --output $OUT2 --auto
+	xsetroot -name "DISPLAY: 1:OFF 2:ON"
+	;;
+	"$OUT2  +0+ ")
+        xrandr --output $OUT1 --auto --output $OUT2 --off
+        xsetroot -name "DISPLAY: 1:ON 2:OFF"
+	;;
+	*)
+	xrandr --auto
+	xsetroot -name "DISPLAY: MIRROR"
+	;;
+esac
