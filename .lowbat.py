@@ -18,7 +18,7 @@ def shutdown():
         i = i - 1
         if status == "Charging":
             run_check()
-    os.popen("poweroff")
+    os.popen("sudo poweroff")
 
 def run_check():
     while True:

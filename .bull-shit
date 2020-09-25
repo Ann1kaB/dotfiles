@@ -1,2 +1,3 @@
 #!/bin/bash
 xrandr --output eDP --off && xrandr --auto
+xrandr --output eDP-1-0 --off && xrandr --auto

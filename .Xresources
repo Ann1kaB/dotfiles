@@ -9,10 +9,11 @@ st.shell: /bin/fish
 
 
 *termname:                 st-256color
+
 ! special
-*.foreground:   #a7b8e9
+*.foreground:   #cfdcff
 *.background:   #000113
-*.cursorColor:  #a7b8e9
+*.cursorColor:  #cfdcff
 
 ! black
 *.color0:       #000113
@@ -27,22 +28,21 @@ st.shell: /bin/fish
 *.color10:      #db41fa
 
 ! yellow
-*.color3:       #3900ec
-*.color11:      #3600df
+*.color3:       #2b00ec
+*.color11:      #0293ff
 
 ! blue
 *.color4:       #0004ed
 *.color12:      #0004f2
 
 ! magenta
-*.color5:       #360dd3
-*.color13:      #360dd3
+*.color5:       #0817f6
+*.color13:      #ff00b6
 
 ! cyan
 *.color6:       #e200d9
 *.color14:      #e200d9
 
 ! white
-*.color7:       #a7b8e9
-*.color15:      #a7b8e9
-
+*.color7:       #b9cbff
+*.color15:      #cbd7fc

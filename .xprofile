@@ -15,7 +15,8 @@ xgamma -gamma 0.8 &
 if [[ $(xrandr | awk '/HDMI-0/ {print $2}') = "connected" ]]; then
 	xrandr --output eDP-1-1 --output HDMI-0 --auto --left-of eDP-1-1
 fi
-
+sudo ~/.lowbat.py &
+sudo /usr/local/bin/thermalboard &
 while true; do
 	sh .xroot
 	sleep 15

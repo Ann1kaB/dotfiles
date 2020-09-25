@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ "$1" = "--up" ]; then
+	xbacklight -inc 5
+	xsetroot -name "BACKLIGHT:$(xbacklight -get | grep -E -o '\<[0-9]*' | head -n1)%"
+elif [ "$1" = "--down" ]; then
+	xbacklight -dec 5
+	xsetroot -name "BACKLIGHT:$(xbacklight -get | grep -E -o '\<[0-9]*' | head -n1)%"
+fi

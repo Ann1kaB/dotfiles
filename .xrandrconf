@@ -12,6 +12,11 @@ OUTPUTS=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^
 OUT1=$(echo $OUTPUTS | xargs | awk '{print $1}')
 OUT2=$(echo $OUTPUTS | xargs | awk '{print $2}')
 
+if [[ $(xrandr --listproviders | egrep -o "NVIDIA-0") == "NVIDIA-0" ]];then
+	OUT1=$(echo $OUTPUTS | xargs | awk '{print $3}')
+	OUT2=$(echo $OUTPUTS | xargs | awk '{print $4}')
+fi
+
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
 POS1=$(echo $POSITION | awk '{print $1}')
@@ -20,22 +25,25 @@ POS2=$(echo $POSITION | awk '{print $2}')
 case "$ACTIVE1 $ACTIVE2 $POS1 $POS2" in
 	"$OUT1 $OUT2 +0+ +0+")
 	xrandr --output $OUT1 --auto --output $OUT2 --auto --left-of $OUT1
-        xsetroot -name "DISPLAY: EXTEND LEFT"
+       	xsetroot -name "DISPLAY: EXTEND LEFT"
 	;;
 	"$OUT1 $OUT2 +1920+ +0+")
 	xrandr --output $OUT1 --auto --output $OUT2 --auto --right-of $OUT1
-        xsetroot -name "DISPLAY: EXTEND RIGHT"
+       	xsetroot -name "DISPLAY: EXTEND RIGHT"
 	;;
 	"$OUT1 $OUT2 +0+ +1920+")
 	xrandr --output $OUT1 --off --output $OUT2 --auto
 	xsetroot -name "DISPLAY: 1:OFF 2:ON"
 	;;
 	"$OUT2  +0+ ")
-        xrandr --output $OUT1 --auto --output $OUT2 --off
-        xsetroot -name "DISPLAY: 1:ON 2:OFF"
+       	xrandr --output $OUT1 --auto --output $OUT2 --off
+       	xsetroot -name "DISPLAY: 1:ON 2:OFF"
 	;;
 	*)
 	xrandr --auto
 	xsetroot -name "DISPLAY: MIRROR"
 	;;
 esac
+
+echo $ACTIVE1 $ACTIVE2 $POS1 $POS2
+echo $OUT1 $OUT2

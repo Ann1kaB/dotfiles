@@ -50,12 +50,12 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, NULL };
 static const char *termcmd[]  = { "st", NULL };
 //volume control
-static const char *mutecmd[] = { "./.volcontrol/mute", NULL };
-static const char *volupcmd[] = { "./.volcontrol/volup", NULL };
-static const char *voldowncmd[] = { "./.volcontrol/voldown", NULL };
+static const char *mutecmd[] = { "./.volume", "--mute", NULL };
+static const char *volupcmd[] = { "./.volume", "--up", NULL };
+static const char *voldowncmd[] = { "./.volume", "--down", NULL };
 //brightness control 
-static const char *brupcmd[] = { "./.backlightcontrol/backlightup", NULL };
-static const char *brdowncmd[] = { "./.backlightcontrol/backlightdown", NULL };
+static const char *brupcmd[] = { "./.backlight", "--up", NULL };
+static const char *brdowncmd[] = { "./.backlight", "--down", NULL };
 //media control
 static const char *tracknext[] = { "playerctl", "next", NULL };
 static const char *trackprev[] = { "playerctl", "previous", NULL };
@@ -70,7 +70,7 @@ static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
 static const char *xrandrkey[] = { "./.xrandrconf", NULL };
 //TDP switch
 static const char *tdpswitch[] = { "sudo", "./.set-tdp/set-tdp", NULL };
-//Display Reset (becaase ASUS is a pile of dogshit)
+//Display Reset (because ASUS is a pile of dogshit)
 static const char *dispswitch[] = { "./.bull-shit", NULL };
 //screen lock
 static const char *setslock[] = { "slock", "NULL" };
@@ -102,7 +102,7 @@ static Key keys[] = {
 	{ MODKEY,			XK_F9, 				spawn, 		{.v = xrandrkey} },
 	{ MODKEY,			XK_s, 				spawn, 		{.v = sysinfo} },
 	{ MODKEY,			XK_F5,				spawn,		{.v = fanmode} },
-	{ MODKEY,			XK_t,				spawn,		{.v = tdpswitch} },
+	{ MODKEY,			XK_p,				spawn,		{.v = tdpswitch} },
 	{ MODKEY,			XK_r,				spawn,		{.v = dispswitch} },
 	{ 0, 				XF86XK_AudioMute, 		spawn, 		{.v = mutecmd } },
 	{ 0, 				XF86XK_AudioLowerVolume, 	spawn, 		{.v = voldowncmd } },

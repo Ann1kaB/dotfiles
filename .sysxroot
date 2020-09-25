@@ -12,8 +12,8 @@ GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics|Power Draw' | awk '/:/ {print $
 WIFI2=$(nmcli dev show wlp3s0 | awk '/STATE:/{print $3}' | sed 's/(connected)/ON/;s/(disconnected)/OFF/')
 # seems to cause issues on new laptop rtl8822ce driver, so disabled for now.
 # WIFIBAND=$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}')
-BAT=$(acpi -b | sed 's/.*, \([0-9]*\)%.*/\1/g')
-GPUSTAT=$(optimus-manager --status | awk '/^Current GPU mode/{print $5}')
+BAT=$(cat /sys/class/power_supply/BAT1/capacity)
+#GPUSTAT=$(optimus-manager --status | awk '/^Current GPU mode/{print $5}')
 num=$(ls /sys/devices/platform/faustus/hwmon | grep hwmon)
 CPUFAN=$(cat /sys/devices/platform/faustus/hwmon/$num/fan1_input)
 GPUFAN=$(cat /sys/devices/platform/faustus/hwmon/$num/fan2_input)

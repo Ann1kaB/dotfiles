@@ -1,0 +1,67 @@
+#!/bin/bash
+
+if [[ "$1" = "--up" ]]; then
+	VOLUME='+5%'
+	sink_command="set-sink-volume"
+	INDICATOR="VOLUME:"
+elif [[ "$1" = "--down" ]]; then
+	VOLUME='-5%'
+	sink_command="set-sink-volume"
+	INDICATOR="VOLUME:"
+elif [[ "$1" = "--mute" ]]; then
+	VOLUME="toggle"
+	sink_command="set-sink-mute"
+	INDICATOR="MUTE:"
+fi
+
+command=$(pactl list sinks | awk '/Sink #|State:|Mute:/{print $2}' | sed 's/#//;s/no/ON/;s/yes/OFF/')
+
+for SINK in $command; do
+        num+=($SINK)
+done
+
+for active in ${!num[@]}; do
+        if [ "${num[$active]}" = "ACTIVE" ]; then
+                active_sinks+=${num[$((active-1))]}
+                echo "ACTIVE ${active_sinks}"
+        fi
+done
+
+get_muted() {
+	for mute in ${!num[@]}; do
+		if [[ "${num[$mute]}" = "ON" || "${num[$mute]}" = "OFF" ]]; then
+			_vol+=${num[$mute]}
+		fi
+	done
+}
+
+get_volume() {
+	vol=$(pactl list sinks | awk '/[^\ ]Volume:/{print $5}')
+
+	for _v in $vol; do
+		_vol+=($_v)
+	done
+}
+
+for _s in $active_sinks; do
+        pactl $sink_command $_s $VOLUME
+	if [ "$1" != "--mute" ];then
+		get_volume
+	else
+		get_muted
+	fi
+        xsetroot -name "${INDICATOR}${_vol[$_s]}"
+done
+echo ${active_sinks}
+
+# default to sink 0
+if [ -z "$active_sinks" ]; then
+        pactl $sink_command 0 $VOLUME
+	if [ "$1" != "--mute" ];then
+		get_volume
+	else
+		get_muted
+	fi
+        xsetroot -name "${INDICATOR}${_vol[0]}"
+fi
+
