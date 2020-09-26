@@ -1,49 +1,121 @@
 #!/bin/bash
 
-IFS=$'\n'
+get_active() {
 
-ACTIVE=$(xrandr --listmonitors | awk '{print $4}' | xargs)
+  ACTIVE=$(xrandr --listmonitors | awk '{print $4}')
 
-ACTIVE1=$(echo $ACTIVE | awk '{print $1}')
-ACTIVE2=$(echo $ACTIVE | awk '{print $2}')
+  for _a in $ACTIVE; do
+    _ACTIVE+=("$_a")
+  done
+
+}
+
+get_active
 
 OUTPUTS=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^\s*$/d' | egrep -o "^\S*")
 
-OUT1=$(echo $OUTPUTS | xargs | awk '{print $1}')
-OUT2=$(echo $OUTPUTS | xargs | awk '{print $2}')
-
-if [[ $(xrandr --listproviders | egrep -o "NVIDIA-0") == "NVIDIA-0" ]];then
-	OUT1=$(echo $OUTPUTS | xargs | awk '{print $3}')
-	OUT2=$(echo $OUTPUTS | xargs | awk '{print $4}')
-fi
+for _o in $OUTPUTS; do
+  _OUT+=("$_o")
+done
 
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
-POS1=$(echo $POSITION | awk '{print $1}')
-POS2=$(echo $POSITION | awk '{print $2}')
+for _p in $POSITION; do
+  _POS+=("$_p")
+  if [ "$_p" = "+0+" ]; then
+    _POS0+=("$_p")
+  else
+    _POSN0+=("$_p")
+  fi
+done
 
-case "$ACTIVE1 $ACTIVE2 $POS1 $POS2" in
-	"$OUT1 $OUT2 +0+ +0+")
-	xrandr --output $OUT1 --auto --output $OUT2 --auto --left-of $OUT1
-       	xsetroot -name "DISPLAY: EXTEND LEFT"
-	;;
-	"$OUT1 $OUT2 +1920+ +0+")
-	xrandr --output $OUT1 --auto --output $OUT2 --auto --right-of $OUT1
-       	xsetroot -name "DISPLAY: EXTEND RIGHT"
-	;;
-	"$OUT1 $OUT2 +0+ +1920+")
-	xrandr --output $OUT1 --off --output $OUT2 --auto
-	xsetroot -name "DISPLAY: 1:OFF 2:ON"
-	;;
-	"$OUT2  +0+ ")
-       	xrandr --output $OUT1 --auto --output $OUT2 --off
-       	xsetroot -name "DISPLAY: 1:ON 2:OFF"
-	;;
-	*)
-	xrandr --auto
-	xsetroot -name "DISPLAY: MIRROR"
-	;;
+disp_command() {
+  for _command in ${!_OUT[@]}; do
+
+    # for every output that is not the first, extend Xorg in ${direction}
+    if [ $_command != 0 ]; then
+      COMMAND+=("--output ${_OUT[$_command]}")
+      COMMAND+=(" --${direction}-of ${_OUT[$((_command-1))]}")
+    fi
+
+    # if active output is last, return to mirrored mode
+    if [ "${_ACTIVE[*]}" = "${_OUT[-1]}" ]; then
+      ON="--auto"
+      LAST="yes"
+    fi
+		
+    # sets outputs off if status is on
+    if [[ "${DISP_STATE[$_command]}" = "ON" && -z "$LAST" ]]; then
+      OFF+=("--output ${_OUT[$_command]} --off")
+    fi
+
+    # if active output state is off, and $ON is not already defined
+    if [[ "${DISP_STATE[$_command]}" = "OFF" && -z "$ON" && -z "$LAST" ]]; then
+      ON="--output ${_OUT[$_command]} --auto"
+    fi
+
+    # turn off all outputs except the first
+    if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" != "0" ]]; then
+      OFF=("--output ${_OUT[$_command]} --off")
+    fi
+  done
+}
+
+disp_state() {
+  for _s in ${!_OUT[@]}; do
+    if [[ "${_ACTIVE[*]}" =~ .*"${_OUT[$_s]}".* ]]; then
+      DISP_STATE+=("ON")
+      DISP_STATE_TEXT+=("DISPLAY: $((_s+1)):ON ")
+    else
+      DISP_STATE+=("OFF")
+      DISP_STATE_TEXT+=("DISPLAY: $((_s+1)):OFF ")
+    fi 
+  done
+}
+
+_first="--output ${_OUT[0]} --auto"
+_last="--output ${_OUT[-1]} --auto"
+
+disp_state
+
+case "${_ACTIVE[*]} ${_POS[*]}" in
+  "${_OUT[*]} ${_POS0[*]}")
+  direction="left"
+  disp_command
+  xrandr ${_first} ${COMMAND[@]}
+  xsetroot -name "DISPLAY: EXTEND LEFT"
+  ;;
+  "${_OUT[*]} ${_POSN0[*]} ${_POS0[*]}")
+  direction="right"
+  disp_command
+  xrandr ${_last} ${COMMAND[@]}
+  xsetroot -name "DISPLAY: EXTEND RIGHT"
+  ;;
+  "${_OUT[*]} ${_POS0[*]} ${_POSN0[*]}")
+  disp_command
+  xrandr ${OFF[@]} ${ON}
+  unset DISP_STATE_TEXT DISP_STATE _ACTIVE
+  get_active
+  disp_state
+  xsetroot -name "${DISP_STATE_TEXT[*]}"
+  ;;
+  "${_ACTIVE[*]} ${_POS0[*]}")
+  disp_command
+  xrandr ${OFF[@]} ${ON}
+  unset DISP_STATE_TEXT DISP_STATE _ACTIVE
+  get_active
+  disp_state
+  # if all displays are being set on, indicate we are in mirror mode
+  if [[ ! "${DISP_STATE[*]}" =~ .*"OFF".* ]]; then
+    xsetroot -name "DISPLAY: MIRROR"
+  else
+    xsetroot -name "${DISP_STATE_TEXT[*]}"
+  fi
+  ;;
+  # if we have only one output, or something ohtherwise unexpected happens
+  *)
+  xrandr --auto
+  xsetroot -name "DISPLAY: MIRROR"
+  ;;
 esac
 
-echo $ACTIVE1 $ACTIVE2 $POS1 $POS2
-echo $OUT1 $OUT2
