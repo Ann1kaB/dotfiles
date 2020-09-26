@@ -1,5 +1,14 @@
 #!/bin/bash
 
+OUTPUT_STATUS=$(xrandr | awk '/connected|disconnected/{print $2}')
+
+# make sure all outputs are connected before running the program
+if [[ "$OUTPUT_STATUS" =~ .*"disconnected".* ]]; then
+  xsetroot -name "WARNING: DISPLAY: 1:ON"
+  echo "Warning: output disconnected."
+  exit 1
+fi
+
 get_active() {
 
   ACTIVE=$(xrandr --listmonitors | awk '{print $4}')
@@ -11,7 +20,7 @@ get_active() {
 
 get_active
 
-OUTPUTS=$(xrandr | awk '{print $1}' | sed 's/.*x.*//;s/Screen//;/^\s*$/d' | egrep -o "^\S*")
+OUTPUTS=$(xrandr | awk '{print $1}' | sed 's/.*x.*//;s/Screen//;/^\s*$/d')
 
 for _o in $OUTPUTS; do
   _OUT+=("$_o")
@@ -19,6 +28,7 @@ done
 
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
+# store position of outputs.
 for _p in $POSITION; do
   _POS+=("$_p")
   # center
@@ -31,31 +41,31 @@ for _p in $POSITION; do
 done
 
 disp_command() {
-  for _command in ${!_OUT[@]}; do
+  for _c in ${!_OUT[@]}; do
 
     # for every output that is not the first, extend Xorg left, or if there are 2 outputs only, do the
     # previous as well, except to the right if ${direction} is right.
-    if [[ $_command != 0 && "$direction" = "left" ]] || [[ $_command != 0 && ${#_OUT[@]} -eq 2 ]]; then
-      COMMAND+=("--output ${_OUT[$_command]}")
-      if [[ "${_OUT[$((_command-1))]}" != "${_OUT[-1]}" ]]; then
-	COMMAND+=(" --${direction}-of ${_OUT[$((_command-1))]}")
+    if [[ $_c != 0 && "$direction" = "left" ]] || [[ $_c != 0 && ${#_OUT[@]} -eq 2 ]]; then
+      COMMAND+=("--output ${_OUT[$_c]}")
+      if [[ "${_OUT[$((_c-1))]}" != "${_OUT[-1]}" ]]; then
+	COMMAND+=(" --${direction}-of ${_OUT[$((_c-1))]}")
       fi
     # if ${direction} is right, make sure we don't add the last output to the xrandr command
     # also make sure we have more than 2 outputs because with only 2, right-of in reverse 
     # order is the same as left-of in normal order
-    elif [[ $_command = 0 || "$direction" = "right" ]] && [ ${#_OUT[@]} -gt 2 ]; then
-      # in reverse order, add to command for each output
-      if [ "${_OUT[$((_command*-1))]}" != "${_OUT[0]}" ]; then
-	      COMMAND+=("--output ${_OUT[$((_command*-1+1))]}")
-        COMMAND+=("--right-of ${_OUT[$((_command*-1))]}")
+    elif [[ $_c = 0 || "$direction" = "right" ]] && [ ${#_OUT[@]} -gt 2 ]; then
+      # in reverse order, add to command for each output that is not the first
+      if [ "${_OUT[$_c]}" != "${_OUT[0]}" ]; then
+	COMMAND+=("--output ${_OUT[$((_c*-1))]}")
+        COMMAND+=("--right-of ${_OUT[$((_c*-1+1))]}")
       fi
     fi
 
     # turn off all outputs except the first
-    if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" != "0" ]]; then
-      OFF+=("--output ${_OUT[$_command]} --off")
+    if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_c" != "0" ]]; then
+      OFF+=("--output ${_OUT[$_c]} --off")
     # set check for all outputs on
-    elif [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" = "0" ]]; then
+    elif [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_c" = "0" ]]; then
       START_CHK="yes"
     fi
 
@@ -66,13 +76,13 @@ disp_command() {
     fi
 
     # sets outputs off if status is on
-    if [[ "${DISP_STATE[$_command]}" = "ON" && -z "$LAST" && -z "$START_CHK" ]]; then
-      OFF+=("--output ${_OUT[$_command]} --off")
+    if [[ "${DISP_STATE[$_c]}" = "ON" && -z "$LAST" && -z "$START_CHK" ]]; then
+      OFF+=("--output ${_OUT[$_c]} --off")
     fi
 
     # if active output state is off, and $ON is not already defined
-    if [[ "${DISP_STATE[$_command]}" = "OFF" && -z "$ON" && -z "$LAST" ]]; then
-      ON="--output ${_OUT[$_command]} --auto"
+    if [[ "${DISP_STATE[$_c]}" = "OFF" && -z "$ON" && -z "$LAST" ]]; then
+      ON="--output ${_OUT[$_c]} --auto"
     fi
       
   done
@@ -126,10 +136,12 @@ case "${_ACTIVE[*]} ${_POS[*]}" in
     xsetroot -name "${DISP_STATE_TEXT[*]}"
   fi
   ;;
-  # if we have only one output, or something ohtherwise unexpected happens
+  # if something otherwise unexpected happens
+  # default to mirror mode but notify an error occured
   *)
   xrandr --auto
   xsetroot -name "ERROR: DISPLAY: MIRROR"
+  exit 1
   ;;
 esac
 
