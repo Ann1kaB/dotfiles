@@ -40,24 +40,59 @@ for _p in $POSITION; do
   fi
 done
 
+get_middle() {
+  for _r in ${!_OUT[@]}; do
+    # start at last output
+    _REV_OUT+=(${_OUT[$((_r*-1-1))]})
+  done
+  for _m in ${!_REV_OUT[@]}; do
+    if [ "${_OUT[$_m]}" = "${_REV_OUT[$_m]}" ]; then
+      middle=${_OUT[$_m]}
+    elif [ -z "$middle" ]; then
+      not_middle+=(${_POS[$_m]})
+      _POSL+=(${_POS[$_m]})
+    # we don't want to add a null value to the array
+    elif [ -n "$middle" ] && [ -n "${_OUT[$((_m+1))]}" ]; then
+      # we don't want to capture the middle
+      past_middle+=("${_OUT[$((_m+1))]}")
+      _POSR+=(${_POS[$_m]})
+    fi
+  done
+}
+
 disp_command() {
   for _c in ${!_OUT[@]}; do
 
+    if [ -n "$ext_l_r" ]; then
+      get_middle
+      MIDDLE=("--output ${middle}")
+      if [ "${_OUT[$_c]}" != "${middle}" ]; then
+        COMMAND+=("--output ${_OUT[$_c]}")
+      fi
+      if [[ "${COMMAND[$((_c-1))]}" =~ .*"--left-of".* && "${_OUT[$_c]}" != "${middle}" ]] || [ "$_c" = 0 ]; then
+	# we want all displays right of ${middle} to the right
+	COMMAND+=("--right-of ${_OUT[$((_c*-1-1))]}")
+      elif [[ "${COMMAND[$((_c-1))]}" =~ .*"--right-of".* && "${_OUT[$_c]}" != "${middle}" ]]; then
+	COMMAND+=("--left-of ${_OUT[$_c]}")
+      fi
+    fi
+    if [ -z "$ext_l_r" ]; then
     # for every output that is not the first, extend Xorg left, or if there are 2 outputs only, do the
     # previous as well, except to the right if ${direction} is right.
-    if [[ $_c != 0 && "$direction" = "left" ]] || [[ $_c != 0 && ${#_OUT[@]} -eq 2 ]]; then
-      COMMAND+=("--output ${_OUT[$_c]}")
-      if [[ "${_OUT[$((_c-1))]}" != "${_OUT[-1]}" ]]; then
-	COMMAND+=(" --${direction}-of ${_OUT[$((_c-1))]}")
-      fi
-    # if ${direction} is right, make sure we don't add the last output to the xrandr command
-    # also make sure we have more than 2 outputs because with only 2, right-of in reverse 
-    # order is the same as left-of in normal order
-    elif [[ $_c = 0 || "$direction" = "right" ]] && [ ${#_OUT[@]} -gt 2 ]; then
-      # in reverse order, add to command for each output that is not the first
-      if [ "${_OUT[$_c]}" != "${_OUT[0]}" ]; then
-	COMMAND+=("--output ${_OUT[$((_c*-1))]}")
-        COMMAND+=("--right-of ${_OUT[$((_c*-1+1))]}")
+      if [[ $_c != 0 && "$direction" = "left" ]] || [[ $_c != 0 && ${#_OUT[@]} -eq 2 ]]; then
+        COMMAND+=("--output ${_OUT[$_c]}")
+        if [[ "${_OUT[$((_c-1))]}" != "${_OUT[-1]}" ]]; then
+	  COMMAND+=(" --${direction}-of ${_OUT[$((_c-1))]}")
+        fi
+      # if ${direction} is right, make sure we don't add the last output to the xrandr command
+      # also make sure we have more than 2 outputs because with only 2, right-of in reverse 
+      # order is the same as left-of in normal order
+      elif [[ $_c = 0 || "$direction" = "right" ]] && [ ${#_OUT[@]} -gt 2 ]; then
+        # in reverse order, add to command for each output that is not the first
+        if [ "${_OUT[$_c]}" != "${_OUT[0]}" ]; then
+	  COMMAND+=("--output ${_OUT[$((_c*-1))]}")
+          COMMAND+=("--right-of ${_OUT[$((_c*-1+1))]}")
+        fi
       fi
     fi
 
@@ -104,44 +139,55 @@ disp_state
 
 case "${_ACTIVE[*]} ${_POS[*]}" in
   "${_OUT[*]} ${_POS0[*]}")
-  direction="left"
-  disp_command
-  xrandr ${COMMAND[@]}
-  xsetroot -name "DISPLAY: EXTEND LEFT"
+    direction="left"
+    disp_command
+    xrandr ${COMMAND[@]}
+    xsetroot -name "DISPLAY: EXTEND LEFT"
   ;;
   "${_OUT[*]} ${_POSN0[*]} ${_POS0[*]}")
-  direction="right"
-  disp_command
-  xrandr ${COMMAND[@]}
-  xsetroot -name "DISPLAY: EXTEND RIGHT"
+    if [ $((${#_OUT[@]}%2)) != 0 ]; then
+      ext_l_r=1
+      DISP_MODE_TEXT="DISPLAY: EXTEND L/R OF MIDDLE"
+    else
+      DISP_MODE_TEXT="DISPLAY: EXTEND RIGHT"
+    fi
+    disp_command
+    xrandr ${COMMAND[@]}
+    xsetroot -name "$DISP_MODE_TEXT"
   ;;
-  "${_OUT[*]} ${_POS0[*]} ${_POSN0[*]}")
-  disp_command
-  xrandr ${OFF[@]} ${ON}
-  unset DISP_STATE_TEXT DISP_STATE _ACTIVE
-  get_active
-  disp_state
-  xsetroot -name "${DISP_STATE_TEXT[*]}"
+  "${_OUT[*]} ${_POSL[*]} ${_POS0[*]} ${_POSR[*]}")
+    direction="right"
+    disp_command
+    xrandr ${COMMAND[@]}
+    xsetroot -name "DISPLAY: EXTEND RIGHT"
+  ;;
+    "${_OUT[*]} ${_POS0[*]} ${_POSN0[*]}")
+    disp_command
+    xrandr ${OFF[@]} ${ON}
+    unset DISP_STATE_TEXT DISP_STATE _ACTIVE
+    get_active
+    disp_state
+    xsetroot -name "${DISP_STATE_TEXT[*]}"
   ;;
   "${_ACTIVE[*]} ${_POS0[*]}")
-  disp_command
-  xrandr ${OFF[@]} ${ON}
-  unset DISP_STATE_TEXT DISP_STATE _ACTIVE
-  get_active
-  disp_state
-  # if all displays are being set on, indicate we are in mirror mode
-  if [[ ! "${DISP_STATE[*]}" =~ .*"OFF".* ]]; then
-    xsetroot -name "DISPLAY: MIRROR"
-  else
-    xsetroot -name "${DISP_STATE_TEXT[*]}"
-  fi
+    disp_command
+    xrandr ${OFF[@]} ${ON}
+    unset DISP_STATE_TEXT DISP_STATE _ACTIVE
+    get_active
+    disp_state
+    # if all displays are being set on, indicate we are in mirror mode
+    if [[ ! "${DISP_STATE[*]}" =~ .*"OFF".* ]]; then
+      xsetroot -name "DISPLAY: MIRROR"
+    else
+      xsetroot -name "${DISP_STATE_TEXT[*]}"
+    fi
   ;;
   # if something otherwise unexpected happens
   # default to mirror mode but notify an error occured
   *)
-  xrandr --auto
-  xsetroot -name "ERROR: DISPLAY: MIRROR"
-  exit 1
+    xrandr --auto
+    xsetroot -name "ERROR: DISPLAY: MIRROR"
+    exit 1
   ;;
 esac
 
