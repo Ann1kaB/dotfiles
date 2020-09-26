@@ -21,9 +21,11 @@ POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
 for _p in $POSITION; do
   _POS+=("$_p")
+  # center
   if [ "$_p" = "+0+" ]; then
     _POS0+=("$_p")
   else
+    # not center
     _POSN0+=("$_p")
   fi
 done
@@ -31,17 +33,28 @@ done
 disp_command() {
   for _command in ${!_OUT[@]}; do
 
-    # for every output that is not the first, extend Xorg in ${direction}
-    if [[ $_command != 0 || "$direction" = "right" && "${_OUT[$_command]}" != "${_OUT[-1]}" ]]; then
+    # for every output that is not the first, extend Xorg left, or if there are 2 outputs only, do the
+    # previous as well, except to the right if ${direction} is right.
+    if [[ $_command != 0 && "$direction" = "left" ]] || [[ $_command != 0 && ${#_OUT[@]} -eq 2 ]]; then
       COMMAND+=("--output ${_OUT[$_command]}")
       if [[ "${_OUT[$((_command-1))]}" != "${_OUT[-1]}" ]]; then
 	COMMAND+=(" --${direction}-of ${_OUT[$((_command-1))]}")
+      fi
+    # if ${direction} is right, make sure we don't add the last output to the xrandr command
+    # also make sure we have more than 2 outputs because with only 2, right-of in reverse 
+    # order is the same as left-of in normal order
+    elif [[ $_command = 0 || "$direction" = "right" ]] && [ ${#_OUT[@]} -gt 2 ]; then
+      # in reverse order, add to command for each output
+      if [ "${_OUT[$((_command*-1))]}" != "${_OUT[0]}" ]; then
+	      COMMAND+=("--output ${_OUT[$((_command*-1+1))]}")
+        COMMAND+=("--right-of ${_OUT[$((_command*-1))]}")
       fi
     fi
 
     # turn off all outputs except the first
     if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" != "0" ]]; then
       OFF+=("--output ${_OUT[$_command]} --off")
+    # set check for all outputs on
     elif [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" = "0" ]]; then
       START_CHK="yes"
     fi
@@ -77,22 +90,19 @@ disp_state() {
   done
 }
 
-_first="--output ${_OUT[0]} --auto"
-_last="--output ${_OUT[-1]} --auto"
-
 disp_state
 
 case "${_ACTIVE[*]} ${_POS[*]}" in
   "${_OUT[*]} ${_POS0[*]}")
   direction="left"
   disp_command
-  xrandr ${_first} ${COMMAND[@]}
+  xrandr ${COMMAND[@]}
   xsetroot -name "DISPLAY: EXTEND LEFT"
   ;;
   "${_OUT[*]} ${_POSN0[*]} ${_POS0[*]}")
   direction="right"
   disp_command
-  xrandr ${_last} ${COMMAND[@]}
+  xrandr ${COMMAND[@]}
   xsetroot -name "DISPLAY: EXTEND RIGHT"
   ;;
   "${_OUT[*]} ${_POS0[*]} ${_POSN0[*]}")
