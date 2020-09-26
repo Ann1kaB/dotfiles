@@ -7,12 +7,11 @@ get_active() {
   for _a in $ACTIVE; do
     _ACTIVE+=("$_a")
   done
-
 }
 
 get_active
 
-OUTPUTS=$(xrandr | awk '{print $1,$2}' | sed 's/.*x.*//;s/Screen//;s/[0-9]://;/^\s*$/d' | egrep -o "^\S*")
+OUTPUTS=$(xrandr | awk '{print $1}' | sed 's/.*x.*//;s/Screen//;/^\s*$/d' | egrep -o "^\S*")
 
 for _o in $OUTPUTS; do
   _OUT+=("$_o")
@@ -33,9 +32,18 @@ disp_command() {
   for _command in ${!_OUT[@]}; do
 
     # for every output that is not the first, extend Xorg in ${direction}
-    if [ $_command != 0 ]; then
+    if [[ $_command != 0 || "$direction" = "right" && "${_OUT[$_command]}" != "${_OUT[-1]}" ]]; then
       COMMAND+=("--output ${_OUT[$_command]}")
-      COMMAND+=(" --${direction}-of ${_OUT[$((_command-1))]}")
+      if [[ "${_OUT[$((_command-1))]}" != "${_OUT[-1]}" ]]; then
+	COMMAND+=(" --${direction}-of ${_OUT[$((_command-1))]}")
+      fi
+    fi
+
+    # turn off all outputs except the first
+    if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" != "0" ]]; then
+      OFF+=("--output ${_OUT[$_command]} --off")
+    elif [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" = "0" ]]; then
+      START_CHK="yes"
     fi
 
     # if active output is last, return to mirrored mode
@@ -43,9 +51,9 @@ disp_command() {
       ON="--auto"
       LAST="yes"
     fi
-		
+
     # sets outputs off if status is on
-    if [[ "${DISP_STATE[$_command]}" = "ON" && -z "$LAST" ]]; then
+    if [[ "${DISP_STATE[$_command]}" = "ON" && -z "$LAST" && -z "$START_CHK" ]]; then
       OFF+=("--output ${_OUT[$_command]} --off")
     fi
 
@@ -53,11 +61,7 @@ disp_command() {
     if [[ "${DISP_STATE[$_command]}" = "OFF" && -z "$ON" && -z "$LAST" ]]; then
       ON="--output ${_OUT[$_command]} --auto"
     fi
-
-    # turn off all outputs except the first
-    if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_command" != "0" ]]; then
-      OFF=("--output ${_OUT[$_command]} --off")
-    fi
+      
   done
 }
 
@@ -115,7 +119,7 @@ case "${_ACTIVE[*]} ${_POS[*]}" in
   # if we have only one output, or something ohtherwise unexpected happens
   *)
   xrandr --auto
-  xsetroot -name "DISPLAY: MIRROR"
+  xsetroot -name "ERROR: DISPLAY: MIRROR"
   ;;
 esac
 
