@@ -1,0 +1,3 @@
+[submodule "/home/hyperkvm/dwm-6.2/st"]
+	path = /home/hyperkvm/dwm-6.2/st
+	url = https://github.com/LukeSmithxyz/st.git
