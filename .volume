@@ -54,9 +54,9 @@ for _s in $active_sinks; do
 done
 echo ${active_sinks}
 
-# default to sink 0
+# default to sink first sink
 if [ -z "$active_sinks" ]; then
-        pactl $sink_command 0 $VOLUME
+        pactl $sink_command ${num[0]} $VOLUME
 	if [ "$1" != "--mute" ];then
 		get_volume
 	else
