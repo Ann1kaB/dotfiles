@@ -1,22 +1,15 @@
 #!/bin/bash
-prime-offload
 pulseaudio &
-wal -i ~/Pictures/wal/002.png
+wal -i ~/Pictures/wal/pink-anime.png
 xrdb ~/.Xresources
-#node ~/playerctl-firefox-youtube/server.js &
 lxsession &
 dunst &
 xss-lock -n /usr/share/doc/xss-lock/dim-screen.sh -- slock &
-	
-# if statment doesn't work because fuck you
-xrandr --output eDP-1-0 --gamma 0.8:0.8:0.8 &
-xgamma -gamma 0.8 &
 
-if [[ $(xrandr | awk '/HDMI-0/ {print $2}') = "connected" ]]; then
-	xrandr --output eDP-1-1 --output HDMI-0 --auto --left-of eDP-1-1
-fi
-sudo ~/.lowbat.py &
-sudo /usr/local/bin/thermalboard &
+xgamma -gamma 0.8
+
+#sudo ~/.lowbat.py &
+
 while true; do
 	sh .xroot
 	sleep 15

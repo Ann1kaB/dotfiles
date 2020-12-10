@@ -6,25 +6,21 @@ if [[ $STATUS == "Discharging" ]]; then
 	case $(cat tdp) in
 		"TDP1")
 		# TDP 2
+		cpupower frequency-set -g ondemand
 		ryzenadj --stapm-limit=35000 --fast-limit=40000 --slow-limit=30000 --tctl-temp=85 --vrmmax-current=40000
 		xsetroot -name "Setting TDP to 30W"
 		echo TDP2 > tdp
 		;;
-		"TDP3")
+		"TDP2")
 		# TDP 1
 		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000 --tctl-temp=80 --vrmmax-current=40000
 		xsetroot -name "Setting TDP to 25W"
 		echo TDP1 > tdp
 		;;
-		"TDP2")
-		# TDP 3
-		ryzenadj --stapm-limit=40000 --fast-limit=40000 --slow-limit=40000 --tctl-temp=95 --vrmmax-current=30000
-		xsetroot -name "Setting TDP to 45W"
-		echo TDP3 > tdp
-		;;
 		*)
 		# TDP 1
-		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000 --tctl-temp=80 --vrmmax-current=40000
+		ryzenadj --stapm-limit=10000 --fast-limit=10000 --slow-limit=10000 --tctl-temp=65 --vrmmax-current=10000
+		cpupower frequency-set -g powersave
 		xsetroot -name "Setting TDP to 25W"
 		echo TDP1 > tdp
 		;;
@@ -46,8 +42,8 @@ elif [[ "$STATUS" = "Charging" || "$STATUS" = "Full" || "$STATUS" = "Unknown"  ]
 		;;
 		"TDP3")
 		# TDP 4
-		ryzenadj --stapm-limit=75000 --fast-limit=75000 --slow-limit=75000 --tctl-temp=95 --vrmmax-current=60000
-		xsetroot -name "Setting TDP to 75W"
+		ryzenadj --stapm-limit=70000 --fast-limit=70000 --slow-limit=70000 --tctl-temp=95 --vrmmax-current=70000
+		xsetroot -name "Setting TDP to 70W"
 		echo TDP4 > tdp
 		;;
 		*)

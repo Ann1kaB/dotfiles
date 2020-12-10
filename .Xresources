@@ -1,48 +1,48 @@
 st.font: Fira Code:pixelsize=12:antialias=true:autohint=true;
 
 st.borderpx: 10
-st.xfps: 120
-st.actionfps: 30
+st.xfps: 144
+st.actionfps: 144
 st.cursorshape: 2
 st.shell: /bin/fish
 
 
 
-*termname:                 st-256color
-
+*termname: st-256color
 ! special
-*.foreground:   #cfdcff
-*.background:   #000113
-*.cursorColor:  #cfdcff
+*.foreground:   #ffbdfa
+*.background:   #000000
+*.cursorColor:  #ffbdfa
 
 ! black
-*.color0:       #000113
-*.color8:       #7480a3
+*.color0:       #f3abff
+*.color8:       #f9acff
 
 ! red
-*.color1:       #b40463
-*.color9:       #b40463
+*.color1:       #cb0872
+*.color9:       #b90b69
 
 ! green
-*.color2:       #db41fa
-*.color10:      #db41fa
+*.color2:       #00d8a5
+*.color10:      #00e8a6
 
 ! yellow
-*.color3:       #2b00ec
-*.color11:      #0293ff
+*.color3:       #c3f100
+*.color11:      #cff000
 
 ! blue
-*.color4:       #0004ed
-*.color12:      #0004f2
+*.color4:       #008afb
+*.color12:      #0080f2
 
 ! magenta
-*.color5:       #0817f6
-*.color13:      #ff00b6
+*.color5:       #f338ef
+*.color13:      #ff2dea
 
 ! cyan
-*.color6:       #e200d9
-*.color14:      #e200d9
+*.color6:       #00f5ff
+*.color14:      #00eaff
 
 ! white
-*.color7:       #b9cbff
-*.color15:      #cbd7fc
+*.color7:       #ffcaf8
+*.color15:      #ffc4f7
+

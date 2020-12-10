@@ -1,14 +1,16 @@
 #!/bin/sh
 
 VER=$(dwm -v)
-DATE=$(/bin/date +"%A %d, %B // %H:%M %p")
+DATE="$(/bin/date +"%A %d, %B // %H:%M")"
 BAT=$(cat /sys/class/power_supply/BAT1/capacity)
-if [ ! -d /sys/class/power_supply/sony_controller_battery_dc:af:68:2c:51:d5/ ]; then
+if [ ! -d /sys/class/power_supply/sony_controller_battery_*/ ]; then
 	ROOT="$DATE // $(dwm -v) // BAT:$BAT%"
 else
-	DS4BAT=$(cat "/sys/class/power_supply/sony_controller_battery_dc:af:68:2c:51:d5/capacity")
+	DS4BAT=$(cat "/sys/class/power_supply/sony_controller_battery_.*/capacity")
 	ROOT="$DATE // $VER // BAT:$BAT% DS4:$DS4BAT%"
 fi
 #echo $ROOT
-
+#while ; do
+#until [ $_SYSXROOT ]; do
 xsetroot -name "${ROOT}"
+#done

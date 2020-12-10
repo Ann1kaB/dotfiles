@@ -7,20 +7,41 @@ static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const char *fonts[]          = { "Fira Code Mono:size=10", "Noto Sans Symbols2:size=10" };
 static const char dmenufont[]       = "monospace:size=12";
-#include "/home/hyperkvm/.cache/wal/colors-wal-dwm.h"
+//#include "/home/hyperkvm/.cache/wal/colors-wal-dwm.h"
+static const char norm_fg[] = "#ff93f7";
+static const char norm_bg[] = "#000000";
+static const char norm_border[] = "#ac9aa5";
+
+static const char sel_fg[] = "#ff93f7";
+static const char sel_bg[] = "#000000";
+static const char sel_border[] = "#f6ddec";
+
+static const char urg_fg[] = "#a36599";
+static const char urg_bg[] = "#D5A3D2";
+static const char urg_border[] = "#D5A3D2";
+
+static const char *colors[][3]      = {
+    /*               fg           bg         border                         */
+    [SchemeNorm] = { norm_fg,     norm_bg,   norm_border }, // unfocused wins
+    [SchemeSel]  = { sel_fg,      sel_bg,    sel_border },  // the focused win
+    [SchemeUrg] =  { urg_fg,      urg_bg,    urg_border },
+};
+
 #include <X11/XF86keysym.h>
 
 /* tagging */
-static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+static const char *tags[] = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
 
 static const Rule rules[] = {
 	/* xprop(1):
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+	/* class      		instance    title       tags mask     isfloating   monitor */
+	{ "Gimp",     		NULL,       NULL,       0,            1,           -1 },
+	{ "PCSX2",    		NULL,       NULL,       0,            1,           -1 },
+	{ "Firefox",  		NULL,       NULL,       1 << 8,       0,           -1 },
+	{ "DiscordCanary",  	NULL,       NULL,       2 << 9,       0,           -1 },
 };
 
 /* layout(s) */
@@ -66,7 +87,7 @@ static const char *windowscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'"
 static const char *selscreenshot[] = { "./.importscript", NULL };
 //system info
 static const char *fanmode[] = { "./.fanmode", NULL };
-static const char *sysinfo[] = { "sh", ".sysxroot", NULL };
+static const char *sysinfo[] = { "./.sysxroot", NULL };
 static const char *xrandrkey[] = { "./.xrandrconf", NULL };
 //TDP switch
 static const char *tdpswitch[] = { "sudo", "./.set-tdp/set-tdp", NULL };

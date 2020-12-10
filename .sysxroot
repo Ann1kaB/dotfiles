@@ -1,21 +1,63 @@
-#!/bin/sh
+#!/bin/bash
 
 #commands
 CPUTEMP=$(sensors | awk '/^Tctl:/ {printf "%d\n", $2}' | sed 's/$/°C/')
-CPU=$(cpupower frequency-info | awk '/frequency:/ {print $4$5}' | tail -n +3)
-MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
-#if [ $(optimus-manager --status | awk '/^Current GPU mode/{print $5}') != "igpu" ] ; then # technically not required anymore with turing GPUs.
-GPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $7}' | sed 's/C/°C/')
-GPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics|Power Draw' | awk '/:/ {print $3,$4}' | sed -n '1p;8p;2p;6p;5p' | xargs | awk '{print $3"MB/"$1"MB" "/" $7"MHz" "/" $6"W"}' | sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
-#fi
-# WIFI=$(nmcli dev wifi | awk '/^*/{print $8"dB"}')
-WIFI2=$(nmcli dev show wlp3s0 | awk '/STATE:/{print $3}' | sed 's/(connected)/ON/;s/(disconnected)/OFF/')
-# seems to cause issues on new laptop rtl8822ce driver, so disabled for now.
-# WIFIBAND=$(nmcli dev wifi | awk '/^*/ {print ($5<14)? 2.4"GHz" : $5}' | awk '{print ($1>14)? 5"GHz" : $1}')
-BAT=$(cat /sys/class/power_supply/BAT1/capacity)
-#GPUSTAT=$(optimus-manager --status | awk '/^Current GPU mode/{print $5}')
-num=$(ls /sys/devices/platform/faustus/hwmon | grep hwmon)
-CPUFAN=$(cat /sys/devices/platform/faustus/hwmon/$num/fan1_input)
-GPUFAN=$(cat /sys/devices/platform/faustus/hwmon/$num/fan2_input)
+CPU=$(cat /proc/cpuinfo | grep MHz | cut -d' ' -f3 | head -n 1)
 
-	xsetroot -name "MEM:$MEM // CPU:$CPUTEMP/$CPU/FAN:${CPUFAN}RPM/GPU:$GPUTEMP$GPU/FAN:${GPUFAN}RPM // BAT:$BAT% // WIFI:$WIFI2"
+MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
+
+for _f in /sys/class/hwmon/*; do
+  if [ "$(cat $_f/name)" = "amdgpu" ]; then
+    for _g in $_f/*; do
+      if [ ! -d $_g ]; then
+        AMDGPU+=($(cat $_g))
+      fi
+    done
+  fi
+  if [ "$AMDGPU" ]; then
+    for _a in ${AMDGPU[@]}; do
+      echo $_a
+      if [ ${AMDGPU[$_a]} > 1000000 ]; then
+        AMDGPUV="${AMDGPU[$_a]}"
+	echo POWER $AMDGPUV
+      fi
+      if [[ ${AMDGPU[$_a]} > 10000 && ${AMDGPU[$_a]} < 130000 ]]; then
+	AMDGPUTEMP="${AMDGPU[$_a]}"
+	echo TEMP $AMDGPUTEMP
+      fi
+    done
+    break
+  fi
+done
+echo ${AMDGPU[@]}
+
+NVGPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $7}' |\
+sed 's/C/°C/')
+NVGPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics|Power Draw' |\
+awk '/:/ {print $3,$4}' | sed -n '1p;8p;2p;6p;5p' | xargs |\
+awk '{print $3"MB/"$1"MB" "/" $7"MHz" "/" $6"W"}' |\
+sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
+
+#WIFI=$(nmcli dev wifi | awk '/^\*/{print $8"dB"}')
+WIFI2=$(nmcli dev show wlp3s0 | awk '/STATE:/{print $3}' |\
+sed 's/(connected)/ON/;s/(disconnected)/OFF/')
+
+# seems to cause issues on new laptop rtl8822ce driver, so disabled for now.
+WIFICHANNEL=$(nmcli dev wifi | grep "^*" | cut -d' ' -f14)
+if [ $WIFICHANNEL > 14 ]; then
+  WIFIBAND="5GHz"
+else
+  WIFIBAND="2.4GHz"
+fi
+
+BAT=$(cat /sys/class/power_supply/BAT1/capacity)
+
+for _h in /sys/devices/platform/faustus/hwmon/*; do
+  CPUFAN=$(cat $_h/fan1_input)
+  GPUFAN=$(cat $_h/fan2_input)
+done
+
+_name="MEM:$MEM // CPU:$CPUTEMP/${CPU}MHz/FAN:${CPUFAN}RPM/GPU:$GPUTEMP$GPU\
+/FAN:${GPUFAN}RPM // BAT:$BAT% // WIFI:$WIFI2/$WIFIBAND"
+
+xsetroot -name "$_name"

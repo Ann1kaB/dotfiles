@@ -1,0 +1,25 @@
+From 70b6d96cfad28e6f871c93441d9aff4f02872bec Mon Sep 17 00:00:00 2001
+From: Hyper-KVM <hyperkvmx86@gmail.com>
+Date: Tue, 27 Oct 2020 00:57:18 -0400
+Subject: [PATCH] vertfull
+
+---
+ dmenu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dmenu.c b/dmenu.c
+index 65f25ce..17a84a8 100644
+--- a/dmenu.c
++++ b/dmenu.c
+@@ -154,7 +154,7 @@ drawmenu(void)
+ 	if (lines > 0) {
+ 		/* draw vertical list */
+ 		for (item = curr; item != next; item = item->right)
+-			drawitem(item, x, y += bh, mw - x);
++			drawitem(item, 0, y += bh, mw);
+ 	} else if (matches) {
+ 		/* draw horizontal list */
+ 		x += inputw;
+-- 
+2.29.0
+

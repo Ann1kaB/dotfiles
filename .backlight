@@ -1,8 +1,48 @@
-#!/bin/sh
-if [ "$1" = "--up" ]; then
-	xbacklight -inc 5
-	xsetroot -name "BACKLIGHT:$(xbacklight -get | grep -E -o '\<[0-9]*' | head -n1)%"
-elif [ "$1" = "--down" ]; then
-	xbacklight -dec 5
-	xsetroot -name "BACKLIGHT:$(xbacklight -get | grep -E -o '\<[0-9]*' | head -n1)%"
-fi
+#!/usr/bin/env python3
+
+import os, sys
+
+BCKL_PATH = "/sys/class/backlight/"
+VALUE = 5
+Backlights = os.listdir(BCKL_PATH)
+
+def read_backlight():
+    with open(_backlight, 'r') as backlight_file:
+        current = int(backlight_file.read())
+    return current
+
+def write_backlight():
+    with open(_backlight, 'w') as backlight_file:
+        backlight_file.write(str(set_value))
+
+for _b in Backlights:
+
+    _backlight = BCKL_PATH + _b
+
+    if "brightness" in os.listdir(_backlight):
+
+        max_brightness = _backlight + "/max_brightness"
+
+        with open(max_brightness, 'r') as max_brightness:
+            MAX_VALUE = int(max_brightness.read())
+
+        _backlight += "/brightness"
+        with open(_backlight, 'r') as backlight_file:
+            current = read_backlight()
+
+        if sys.argv[1] == "--up":
+            current += current % 5
+            if current > 254:
+                exit(0)
+            set_value = current + VALUE
+            write_backlight()
+
+        elif sys.argv[1] == "--down":
+            current -= current % 5
+            if current < 1:
+                exit(0)
+            set_value = current - VALUE
+            write_backlight()
+
+        current = round((read_backlight() / MAX_VALUE) * 100)
+        os.system("xsetroot -name \"BACKLIGHT: %s%%\"" % current)

@@ -2,12 +2,9 @@
 
 OUTPUT_STATUS=$(xrandr | awk '/connected|disconnected/{print $2}')
 
-# make sure all outputs are connected before running the program
-if [[ "$OUTPUT_STATUS" =~ .*"disconnected".* ]]; then
-  xsetroot -name "WARNING: DISPLAY: 1:ON"
-  echo "Warning: output disconnected."
-  exit 1
-fi
+for _os in ${OUTPUT_STATUS}; do
+  _OUT_STAT+=("$_os")
+done
 
 get_active() {
 
@@ -18,13 +15,23 @@ get_active() {
   done
 }
 
-get_active
-
-OUTPUTS=$(xrandr | awk '{print $1}' | sed 's/.*x.*//;s/Screen//;/^\s*$/d')
+get_active && OUTPUTS=$(xrandr | awk '{print $1}' | sed 's/.*x.*//;s/Screen//;/^\s*$/d')
 
 for _o in $OUTPUTS; do
   _OUT+=("$_o")
 done
+
+for _co in ${!_OUT[@]}; do
+  # we want to filter out disconnected outputs because they interfere
+  [ "${_OUT_STAT[$_co]}" != "disconnected" ] && _COUT+=("${_OUT[$_co]}")
+done
+
+# make sure at least 2 outputs are connected before running the program
+if [[ "$OUTPUT_STATUS" =~ .*"disconnected".* && ${#_OUT[@]} -le 2 ]]; then
+  xsetroot -name "WARNING: DISPLAY: 1:ON"
+  echo "Warning: at least 1 output disconnected, exiting..."
+  exit 1
+fi
 
 POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 
@@ -32,100 +39,95 @@ POSITION=$(xrandr --listmonitors | awk '{print $3}' | grep -o "+.*+")
 for _p in $POSITION; do
   _POS+=("$_p")
   # center
-  if [ "$_p" = "+0+" ]; then
-    _POS0+=("$_p")
-  else
-    # not center
-    _POSN0+=("$_p")
-  fi
+  [ "$_p" = "+0+" ] && _POS0+=("$_p") || _POSN0+=("$_p")
 done
 
 get_middle() {
-  for _r in ${!_OUT[@]}; do
+  for _r in ${!_COUT[@]}; do
     # start at last output
-    _REV_OUT+=(${_OUT[$((_r*-1-1))]})
+    _REV_COUT+=(${_COUT[$((_r*-1-1))]})
   done
-  for _m in ${!_REV_OUT[@]}; do
-    if [ "${_OUT[$_m]}" = "${_REV_OUT[$_m]}" ]; then
-      middle=${_OUT[$_m]}
-    elif [ -z "$middle" ]; then
-      not_middle+=(${_POS[$_m]})
+  for _m in ${!_REV_COUT[@]}; do
+    if [ "${_COUT[$_m]}" = "${_REV_COUT[$_m]}" ]; then
+      middle=${_COUT[$_m]}
+      MID_DISP="$_m"
+    fi
+    if [ -z "$middle" ]; then
       _POSL+=(${_POS[$_m]})
     # we don't want to add a null value to the array
-    elif [ -n "$middle" ] && [ -n "${_OUT[$((_m+1))]}" ]; then
+    elif [ -n "$middle" ] && [ -n "${_COUT[$((_m+1))]}" ]; then
       # we don't want to capture the middle
-      past_middle+=("${_OUT[$((_m+1))]}")
-      _POSR+=(${_POS[$_m]})
+      _POSR+=(${_POS[$((_m+1))]})
     fi
   done
 }
 
 disp_command() {
-  for _c in ${!_OUT[@]}; do
+  for _c in ${!_COUT[@]}; do
 
     if [ -n "$ext_l_r" ]; then
-      get_middle
-      MIDDLE=("--output ${middle}")
-      if [ "${_OUT[$_c]}" != "${middle}" ]; then
-        COMMAND+=("--output ${_OUT[$_c]}")
-      fi
-      if [[ "${COMMAND[$((_c-1))]}" =~ .*"--left-of".* && "${_OUT[$_c]}" != "${middle}" ]] || [ "$_c" = 0 ]; then
+      # We want the middle display, hopefully the middle display is the output in the middle of the _COUT array
+      # to get that we simply reverse the order and compare the arrays for a match, that is the middle.
+      get_middle && MIDDLE=("--output ${middle}")
+      [ "${_COUT[$_c]}" != "${middle}" ] && COMMAND+=("--output ${_COUT[$_c]}")
+
+      if [[ "${COMMAND[$((_c-1))]}" =~ .*"--left-of".* && "${_COUT[$_c]}" != "${middle}" ]] || [ "$_c" = 0 ]; then
 	# we want all displays right of ${middle} to the right
-	COMMAND+=("--right-of ${_OUT[$((_c*-1-1))]}")
-      elif [[ "${COMMAND[$((_c-1))]}" =~ .*"--right-of".* && "${_OUT[$_c]}" != "${middle}" ]]; then
-	COMMAND+=("--left-of ${_OUT[$_c]}")
+	COMMAND+=("--right-of ${_COUT[$((_c*-1-1))]}")
+      elif [[ "${COMMAND[$((_c-1))]}" =~ .*"--right-of".* && "${_COUT[$_c]}" != "${middle}" ]]; then
+	COMMAND+=("--left-of ${_COUT[$_c]}")
       fi
     fi
     if [ -z "$ext_l_r" ]; then
     # for every output that is not the first, extend Xorg left, or if there are 2 outputs only, do the
     # previous as well, except to the right if ${direction} is right.
-      if [[ $_c != 0 && "$direction" = "left" ]] || [[ $_c != 0 && ${#_OUT[@]} -eq 2 ]]; then
-        COMMAND+=("--output ${_OUT[$_c]}")
-        if [[ "${_OUT[$((_c-1))]}" != "${_OUT[-1]}" ]]; then
-	  COMMAND+=(" --${direction}-of ${_OUT[$((_c-1))]}")
+      if [[ $_c != 0 && "$direction" = "left" ]] || [[ $_c != 0 && ${#_COUT[@]} -eq 2 ]]; then
+        COMMAND+=("--output ${_COUT[$_c]}")
+        if [[ "${_COUT[$((_c-1))]}" != "${_COUT[-1]}" ]]; then
+	  COMMAND+=(" --${direction}-of ${_COUT[$((_c-1))]}")
         fi
       # if ${direction} is right, make sure we don't add the last output to the xrandr command
       # also make sure we have more than 2 outputs because with only 2, right-of in reverse 
       # order is the same as left-of in normal order
-      elif [[ $_c = 0 || "$direction" = "right" ]] && [ ${#_OUT[@]} -gt 2 ]; then
+      elif [[ $_c = 0 || "$direction" = "right" ]] && [ ${#_COUT[@]} -gt 2 ]; then
         # in reverse order, add to command for each output that is not the first
-        if [ "${_OUT[$_c]}" != "${_OUT[0]}" ]; then
-	  COMMAND+=("--output ${_OUT[$((_c*-1))]}")
-          COMMAND+=("--right-of ${_OUT[$((_c*-1+1))]}")
+        if [ "${_COUT[$_c]}" != "${_COUT[0]}" ]; then
+	  COMMAND+=("--output ${_COUT[$((_c*-1))]}")
+          COMMAND+=("--right-of ${_COUT[$((_c*-1+1))]}")
         fi
       fi
     fi
 
     # turn off all outputs except the first
-    if [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_c" != "0" ]]; then
-      OFF+=("--output ${_OUT[$_c]} --off")
+    if [[ "${_ACTIVE[*]}" = "${_COUT[*]}" && "$_c" != "0" ]]; then
+      OFF+=("--output ${_COUT[$_c]} --off")
     # set check for all outputs on
-    elif [[ "${_ACTIVE[*]}" = "${_OUT[*]}" && "$_c" = "0" ]]; then
+    elif [[ "${_ACTIVE[*]}" = "${_COUT[*]}" && "$_c" = "0" ]]; then
       START_CHK="yes"
     fi
 
     # if active output is last, return to mirrored mode
-    if [ "${_ACTIVE[*]}" = "${_OUT[-1]}" ]; then
+    if [ "${_ACTIVE[*]}" = "${_COUT[-1]}" ]; then
       ON="--auto"
       LAST="yes"
     fi
 
     # sets outputs off if status is on
     if [[ "${DISP_STATE[$_c]}" = "ON" && -z "$LAST" && -z "$START_CHK" ]]; then
-      OFF+=("--output ${_OUT[$_c]} --off")
+      OFF+=("--output ${_COUT[$_c]} --off")
     fi
 
     # if active output state is off, and $ON is not already defined
     if [[ "${DISP_STATE[$_c]}" = "OFF" && -z "$ON" && -z "$LAST" ]]; then
-      ON="--output ${_OUT[$_c]} --auto"
+      ON="--output ${_COUT[$_c]} --auto"
     fi
       
   done
 }
 
 disp_state() {
-  for _s in ${!_OUT[@]}; do
-    if [[ "${_ACTIVE[*]}" =~ .*"${_OUT[$_s]}".* ]]; then
+  for _s in ${!_COUT[@]}; do
+    if [[ "${_ACTIVE[*]}" =~ .*"${_COUT[$_s]}".* ]]; then
       DISP_STATE+=("ON")
       DISP_STATE_TEXT+=("DISPLAY: $((_s+1)):ON ")
     else
@@ -138,56 +140,45 @@ disp_state() {
 disp_state
 
 case "${_ACTIVE[*]} ${_POS[*]}" in
-  "${_OUT[*]} ${_POS0[*]}")
-    direction="left"
-    disp_command
-    xrandr ${COMMAND[@]}
-    xsetroot -name "DISPLAY: EXTEND LEFT"
+  "${_COUT[*]} ${_POS0[*]}") echo case 1 && direction="left" && disp_command && xrandr ${COMMAND[@]}
+  xsetroot -name "DISPLAY: EXTEND LEFT"
   ;;
-  "${_OUT[*]} ${_POSN0[*]} ${_POS0[*]}")
-    if [ $((${#_OUT[@]}%2)) != 0 ]; then
+  "${_COUT[*]} ${_POSN0[*]} ${_POS0[*]}") echo case 2
+    if [ $((${#_COUT[@]}%2)) != 0 ]; then
       ext_l_r=1
-      DISP_MODE_TEXT="DISPLAY: EXTEND L/R OF MIDDLE"
+      DISP_MODE_TEXT="DISPLAY: EXTEND L/R OF DISPLAY: ${MID_DISP}"
     else
+      direction="right"
       DISP_MODE_TEXT="DISPLAY: EXTEND RIGHT"
     fi
-    disp_command
-    xrandr ${COMMAND[@]}
-    xsetroot -name "$DISP_MODE_TEXT"
+    disp_command && xrandr ${COMMAND[@]} && xsetroot -name "$DISP_MODE_TEXT"
   ;;
-  "${_OUT[*]} ${_POSL[*]} ${_POS0[*]} ${_POSR[*]}")
-    direction="right"
-    disp_command
-    xrandr ${COMMAND[@]}
+  "${_COUT[*]} ${_POSL[*]} ${_POS0[*]} ${_POSR[*]}") echo case 3
+    direction="right" && disp_command && xrandr ${COMMAND[@]}
     xsetroot -name "DISPLAY: EXTEND RIGHT"
   ;;
-    "${_OUT[*]} ${_POS0[*]} ${_POSN0[*]}")
-    disp_command
-    xrandr ${OFF[@]} ${ON}
+    "${_COUT[*]} ${_POS0[*]} ${_POSN0[*]}")
+    echo case 4
+    disp_command && xrandr ${OFF[@]} ${ON}
     unset DISP_STATE_TEXT DISP_STATE _ACTIVE
-    get_active
-    disp_state
-    xsetroot -name "${DISP_STATE_TEXT[*]}"
+    get_active && disp_state && xsetroot -name "${DISP_STATE_TEXT[*]}"
   ;;
   "${_ACTIVE[*]} ${_POS0[*]}")
-    disp_command
-    xrandr ${OFF[@]} ${ON}
+    echo case 5 && disp_command && xrandr ${OFF[@]} ${ON}
     unset DISP_STATE_TEXT DISP_STATE _ACTIVE
-    get_active
-    disp_state
+    get_active && disp_state
     # if all displays are being set on, indicate we are in mirror mode
-    if [[ ! "${DISP_STATE[*]}" =~ .*"OFF".* ]]; then
-      xsetroot -name "DISPLAY: MIRROR"
-    else
-      xsetroot -name "${DISP_STATE_TEXT[*]}"
-    fi
+    [[ ! "${DISP_STATE[*]}" =~ "OFF" ]] && xsetroot -name "DISPLAY: MIRROR" \
+    ||  xsetroot -name "${DISP_STATE_TEXT[*]}"
   ;;
   # if something otherwise unexpected happens
   # default to mirror mode but notify an error occured
-  *)
-    xrandr --auto
-    xsetroot -name "ERROR: DISPLAY: MIRROR"
-    exit 1
+  *) echo default case && xrandr --auto && xsetroot -name "ERROR: DISPLAY: MIRROR"
+  exit 1
   ;;
 esac
 
+echo ${COMMAND[@]}
+echo ${OFF[@]} $ON
+echo ${DISP_STATE_TEXT[@]}
+echo POS:${_POS[@]} POSN0:${_POSN0[@]} POS0:${_POS0[@]}
