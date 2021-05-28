@@ -2,8 +2,7 @@
 
 #commands
 CPUTEMP=$(sensors | awk '/^Tctl:/ {printf "%d\n", $2}' | sed 's/$/°C/')
-CPU=$(cat /proc/cpuinfo | grep MHz | cut -d' ' -f3 | head -n 1)
-
+CPU=$(cat /proc/cpuinfo | grep MHz | cut -d' ' -f3 | sort -nr | head -n1)
 MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
 
 for _f in /sys/class/hwmon/*; do
@@ -11,25 +10,33 @@ for _f in /sys/class/hwmon/*; do
     for _g in $_f/*; do
       if [ ! -d $_g ]; then
         AMDGPU+=($(cat $_g))
+	AMDGPU_fname+=($(basename $_g))
       fi
     done
   fi
   if [ "$AMDGPU" ]; then
-    for _a in ${AMDGPU[@]}; do
-      echo $_a
-      if [ ${AMDGPU[$_a]} > 1000000 ]; then
+    for _a in ${!AMDGPU[@]}; do
+      if [ ${AMDGPU_fname[$_a]} = "power1_average" ]; then
         AMDGPUV="${AMDGPU[$_a]}"
-	echo POWER $AMDGPUV
       fi
-      if [[ ${AMDGPU[$_a]} > 10000 && ${AMDGPU[$_a]} < 130000 ]]; then
+      if [ "${AMDGPU_fname[$_a]}" = "temp1_input" ]; then
 	AMDGPUTEMP="${AMDGPU[$_a]}"
-	echo TEMP $AMDGPUTEMP
       fi
     done
     break
   fi
 done
-echo ${AMDGPU[@]}
+
+if [ "$AMDGPUV" ] && [ "$AMDGPUV" != "0" ]; then
+	AMDGPUV=$((AMDGPUV/1000))
+else
+	AMDGPUV=0
+fi
+  #echo $AMDGPUV
+
+if [ "$AMDGPUTEMP" ]; then
+  AMDGPUTEMP=${AMDGPUTEMP//000/}
+fi
 
 NVGPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $7}' |\
 sed 's/C/°C/')
@@ -38,13 +45,13 @@ awk '/:/ {print $3,$4}' | sed -n '1p;8p;2p;6p;5p' | xargs |\
 awk '{print $3"MB/"$1"MB" "/" $7"MHz" "/" $6"W"}' |\
 sed 's/MB\/MB\/MHz/OFF/;s/^/\//')
 
-#WIFI=$(nmcli dev wifi | awk '/^\*/{print $8"dB"}')
-WIFI2=$(nmcli dev show wlp3s0 | awk '/STATE:/{print $3}' |\
-sed 's/(connected)/ON/;s/(disconnected)/OFF/')
+WIFI=$(iwctl station wlp3s0 show | awk '/ RSSI/{print $2}')
+WIFI2=$(iwctl station wlp3s0 show | awk '/State/{print $2}' |\
+sed 's/disconnected/OFF/;s/connected/ON/')
 
 # seems to cause issues on new laptop rtl8822ce driver, so disabled for now.
-WIFICHANNEL=$(nmcli dev wifi | grep "^*" | cut -d' ' -f14)
-if [ $WIFICHANNEL > 14 ]; then
+WIFICHANNEL=$(iwctl station wlp3s0 show | awk '/Frequency/{print $2}')
+if [ $WIFICHANNEL > 4900 ]; then
   WIFIBAND="5GHz"
 else
   WIFIBAND="2.4GHz"
@@ -57,7 +64,8 @@ for _h in /sys/devices/platform/faustus/hwmon/*; do
   GPUFAN=$(cat $_h/fan2_input)
 done
 
-_name="MEM:$MEM // CPU:$CPUTEMP/${CPU}MHz/FAN:${CPUFAN}RPM/GPU:$GPUTEMP$GPU\
-/FAN:${GPUFAN}RPM // BAT:$BAT% // WIFI:$WIFI2/$WIFIBAND"
+_name="MEM:$MEM // CPU:$CPUTEMP/${CPU}MHz/FAN:${CPUFAN}RPM/AMDGPU:${AMDGPUTEMP}°C\
+/${AMDGPUV}W/NVGPU:$NVGPUTEMP$NVGPU\
+/FAN:${GPUFAN}RPM // BAT:$BAT% // WIFI:$WIFI2/$WIFIBAND/RSSI:$WIFI"
 
 xsetroot -name "$_name"

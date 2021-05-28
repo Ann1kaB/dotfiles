@@ -1,0 +1,48 @@
+#!/bin/bash
+curr_mode=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_auramode")
+
+if [[ $1 != "-c" ]]; then
+	if [[ $curr_mode -le 3 ]] && [[ $1 == "-u" ]]; then
+		echo $(($curr_mode+1)) > "/sys/devices/platform/faustus/kbbl/kbbl_auramode"
+		echo 1 > /sys/devices/platform/faustus/kbbl/kbbl_set
+	elif [[ $curr_mode -gt 0 ]]; then
+		echo $(($curr_mode-1)) > "/sys/devices/platform/faustus/kbbl/kbbl_auramode"
+		echo 1 > /sys/devices/platform/faustus/kbbl/kbbl_set
+	elif [[ $1 == "-u" ]]; then
+		echo 0 > /sys/devices/platform/faustus/kbbl/kbbl_auramode
+		echo 1 > /sys/devices/platform/faustus/kbbl/kbbl_set
+	else
+		echo 3 > /sys/devices/platform/faustus/kbbl/kbbl_auramode
+		echo 1 > /sys/devices/platform/faustus/kbbl/kbbl_set
+	fi
+fi
+
+curr_mode=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_auramode")
+case $curr_mode in
+	"00") curr_mode="MANUAL"
+	curr_mode_man1=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_red")
+	curr_mode_man2=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_green")
+	curr_mode_man3=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_blue")
+	curr_mode_ext="R: $curr_mode_man1 G: $curr_mode_man2 B: $curr_mode_man3" ;;
+	"01") curr_mode="MODE" 
+	curr_mode_ext=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_mode")
+	case $curr_mode_ext in
+		"00") curr_mode_ext="STATIC" ;;
+		"01") curr_mode_ext="BREATHE" ;;
+		"02") curr_mode_ext="AUTO" ;;
+		"03") curr_mode_ext="STROBE" ;;
+		*) curr_mode_ext="ERROR" ;;
+	esac ;;
+	"02") curr_mode="SPEED"
+	curr_mode_ext=$(cat "/sys/devices/platform/faustus/kbbl/kbbl_speed")
+	case $curr_mode_ext in
+		"00") curr_mode_ext="SLOW" ;;
+		"01") curr_mode_ext="MED" ;;
+		"02") curr_mode_ext="FAST" ;;
+		*) curr_mode_ext="ERROR" ;;
+	esac ;;
+	"03") curr_mode="WB" ;;
+	*) curr_mode="ERROR" ;;
+esac
+
+xsetroot -name "AURA MODE: $curr_mode: $curr_mode_ext"

@@ -38,10 +38,10 @@ static const Rule rules[] = {
 	 *	WM_NAME(STRING) = title
 	 */
 	/* class      		instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     		NULL,       NULL,       0,            1,           -1 },
-	{ "PCSX2",    		NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  		NULL,       NULL,       1 << 8,       0,           -1 },
-	{ "DiscordCanary",  	NULL,       NULL,       2 << 9,       0,           -1 },
+	{ "Gimp",     	NULL,       NULL,       0,            1,           -1 },
+	{ "PCSX2",    	NULL,       NULL,       0,            1,           -1 },
+	{ "Firefox", 	NULL,       NULL,       1 << 8,       0,           -1 },
+	{ "discord",  	NULL,       NULL,       2 << 9,       0,           -1 },
 };
 
 /* layout(s) */
@@ -65,18 +65,20 @@ static const Layout layouts[] = {
 	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
-#define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
+#define SHCMD(cmd) { .v = (const char*[]){ "/bin/bash", "-c", cmd, NULL } }
 //commands
+static const char status[] = "dwm-status";
+static const char sleep_time[] = "10";
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, NULL };
 static const char *termcmd[]  = { "st", NULL };
 //volume control
-static const char *mutecmd[] = { "./.volume", "--mute", NULL };
-static const char *volupcmd[] = { "./.volume", "--up", NULL };
-static const char *voldowncmd[] = { "./.volume", "--down", NULL };
+static const char *mutecmd[] = { status, "volume --mute", sleep_time, NULL };
+static const char *volupcmd[] = { status, "volume --up", sleep_time, NULL };
+static const char *voldowncmd[] = { status, "volume --down", sleep_time, NULL };
 //brightness control 
-static const char *brupcmd[] = { "./.backlight", "--up", NULL };
-static const char *brdowncmd[] = { "./.backlight", "--down", NULL };
+static const char *brupcmd[] = { status, "backlight --up", sleep_time, NULL };
+static const char *brdowncmd[] = { status, "backlight --down", sleep_time, NULL };
 //media control
 static const char *tracknext[] = { "playerctl", "next", NULL };
 static const char *trackprev[] = { "playerctl", "previous", NULL };
@@ -86,15 +88,17 @@ static const char *fullscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", 
 static const char *windowscreenshot[] = { "scrot", "-e", "\''mv $f Pictures/'\'", "-u", "-d", "2", NULL };
 static const char *selscreenshot[] = { "./.importscript", NULL };
 //system info
-static const char *fanmode[] = { "./.fanmode", NULL };
-static const char *sysinfo[] = { "./.sysxroot", NULL };
-static const char *xrandrkey[] = { "./.xrandrconf", NULL };
+static const char *fanmode[] = { status, "fanmode", sleep_time, NULL };
+static const char *tracker[] = { status, NULL };
+static const char *xrandrkey[] = { status, "xrandrconf", sleep_time, NULL };
 //TDP switch
-static const char *tdpswitch[] = { "sudo", "./.set-tdp/set-tdp", NULL };
-//Display Reset (because ASUS is a pile of dogshit)
-static const char *dispswitch[] = { "./.bull-shit", NULL };
+static const char *tdpswitch[] = { status, "sudo set-tdp", sleep_time, NULL };
 //screen lock
 static const char *setslock[] = { "slock", "NULL" };
+//ASUS aura RGB control
+static const char *auramodedown[] = { status, "auramodeswitch", sleep_time, NULL };
+static const char *auramodeup[] = { status, "auramodeswitch -u", sleep_time, NULL };
+static const char *auramodecheck[] = { status, "auramodeswitch -c", sleep_time, NULL };
 static Key keys[] = {
 	/* modifier                     key        			function        argument */
 	{ MODKEY,                       XK_o,      			spawn,          {.v = dmenucmd } },
@@ -121,10 +125,12 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_0,      			tag,            {.ui = ~0 } },
 	{ MODKEY|ShiftMask,             XK_Return, 			spawn,		{.v = termcmd } },
 	{ MODKEY,			XK_F9, 				spawn, 		{.v = xrandrkey} },
-	{ MODKEY,			XK_s, 				spawn, 		{.v = sysinfo} },
+	{ MODKEY,			XK_s, 				spawn, 		{.v = tracker} },
 	{ MODKEY,			XK_F5,				spawn,		{.v = fanmode} },
+	{ MODKEY,			XK_Down,			spawn,		{.v = auramodedown} },
+	{ MODKEY,			XK_Up,				spawn,		{.v = auramodeup} },
+	{ MODKEY,			XK_a,				spawn,		{.v = auramodecheck} },
 	{ MODKEY,			XK_p,				spawn,		{.v = tdpswitch} },
-	{ MODKEY,			XK_r,				spawn,		{.v = dispswitch} },
 	{ 0, 				XF86XK_AudioMute, 		spawn, 		{.v = mutecmd } },
 	{ 0, 				XF86XK_AudioLowerVolume, 	spawn, 		{.v = voldowncmd } },
 	{ 0, 				XF86XK_AudioRaiseVolume, 	spawn, 		{.v = volupcmd } },

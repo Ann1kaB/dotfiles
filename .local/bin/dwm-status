@@ -1,0 +1,46 @@
+#!/bin/bash
+
+STATE_FILE_PATH="/tmp/_dwm_state"
+STATE=$(cat $STATE_FILE_PATH)
+COOLDOWN=$2
+
+PROG_NAME="$0"
+
+main() {
+  STATE=$(cat $STATE_FILE_PATH)
+  while [ $STATE == 1 ]; do
+    STATE=$(cat $STATE_FILE_PATH)
+    ~/.sysxroot
+    [ -n "$(pgrep -f ./.xprofile)" ] && kill $(pgrep -f ./.xprofile)
+    sleep 5
+  done
+}
+
+if [ ! -e $STATE_FILE_PATH ]; then
+	echo 1 > $STATE_FILE_PATH
+fi
+
+run_xprofile() { ~/.xprofile; echo 0 > $STATE_FILE_PATH; exit; }
+
+trap run_xprofile INT
+
+if [ -n "$1" ]; then
+  echo 0 > $STATE_FILE_PATH
+  $1
+  if [ -n "$(pgrep -f ./.xprofile)" ]; then
+    kill $(pgrep -f ./.xprofile)
+  fi
+  if [ $(($(pgrep -f $PROG_NAME | wc -l))) -gt 2 ]; then
+    kill $(pgrep -f $PROG_NAME | head -n -1)
+  fi
+  sleep $COOLDOWN
+  if [ $(pgrep -f .xprofile | wc -l) -eq 0 ]; then
+    ~/.xprofile
+  fi
+  exit
+fi
+
+case $STATE in
+	0) echo 1 > $STATE_FILE_PATH; [ -n "$(pgrep -f ./.xprofile)" ] && kill $(pgrep -f ./.xprofile); main ;;
+	1) echo 0 > $STATE_FILE_PATH; ~/.xprofile; kill $(pgrep -f $PROG_NAME) ;;
+esac

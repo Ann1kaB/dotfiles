@@ -1,16 +1,20 @@
-#!/bin/bash
-pulseaudio &
-wal -i ~/Pictures/wal/pink-anime.png
-xrdb ~/.Xresources
-lxsession &
-dunst &
-xss-lock -n /usr/share/doc/xss-lock/dim-screen.sh -- slock &
-
-xgamma -gamma 0.8
-
-#sudo ~/.lowbat.py &
+#!/bin/sh
+if [ "$1" = "--start" ]; then
+  /usr/bin/prime-offload
+  pulseaudio &
+  wal -i ~/Pictures/wal/pink-anime.png
+  xrdb ~/.Xresources
+  #lxsession &
+  dunst &
+  xss-lock -n /usr/share/doc/xss-lock/dim-screen.sh -- slock &
+fi
 
 while true; do
-	sh .xroot
-	sleep 15
+  if [ $(($(/bin/date +"%S"))) -eq 0 ]; then
+    sh ~/.xroot
+    sleep 60
+  else
+    sh ~/.xroot
+    sleep $((($(/bin/date +"%S")-60)*-1))
+  fi
 done &

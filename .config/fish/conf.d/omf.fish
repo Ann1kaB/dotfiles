@@ -2,7 +2,7 @@
 set -q XDG_DATA_HOME
   and set -gx OMF_PATH "$XDG_DATA_HOME/omf"
   or set -gx OMF_PATH "$HOME/.local/share/omf"
-set PATH $PATH /home/hyperkvm/pkg/bin /home/hyperkvm/pkg/sbin /home/hyperkvm/git/void-packages
+set PATH $PATH /home/hyperkvm/.local/bin /home/hyperkvm/git/void-packages
 set -x EDITOR nvim
 set -x CC ccache clang
 set -x CXX ccache clang++

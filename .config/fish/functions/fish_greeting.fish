@@ -1,3 +1,5 @@
 function fish_greeting
-    hyper_kvm | lolcat
+    set_color ff93f7
+    hyper_kvm
+    felix
 end

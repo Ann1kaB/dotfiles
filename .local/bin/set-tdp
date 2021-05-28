@@ -1,0 +1,38 @@
+#!/bin/bash
+
+STATUS=$(cat /sys/class/power_supply/BAT1/status)
+
+if [[ "$STATUS" = "Discharging" ]]; then
+	case $(ryzenadj --info | awk '/ slow-limit/{print $6}'| cut -d'.' -f1) in
+		12) cpupower frequency-set -g ondemand
+		ryzenadj --stapm-limit=35000 --fast-limit=40000 --slow-limit=30000
+		xsetroot -name "Setting TDP to 30W" ;;
+		30) ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000
+		xsetroot -name "Setting TDP to 25W" ;;
+		*)
+		# TDP 1
+		ryzenadj --stapm-limit=12000 --fast-limit=12000 --slow-limit=12000
+		xsetroot -name "Setting TDP to 12W(default)" ;;
+	esac
+
+elif [[ "$STATUS" =~ Charging|Full|Unknown  ]]; then
+	case $(ryzenadj --info | awk '/ slow-limit/{print $6}'| cut -d'.' -f1) in
+		25)
+		ryzenadj --stapm-limit=45000 --fast-limit=40000 --slow-limit=40000
+		xsetroot -name "Setting TDP to 40W" ;;
+		40)
+		# TDP 3
+		ryzenadj --stapm-limit=50000 --fast-limit=55000 --slow-limit=45000
+		xsetroot -name "Setting TDP to 45W" ;;
+		45)
+		# TDP 4
+		ryzenadj --stapm-limit=60000 --fast-limit=70000 --slow-limit=65000
+		xsetroot -name "Setting TDP to 65W" ;;
+		*)
+		# TDP 1
+		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000
+		xsetroot -name "Setting TDP to 25W" ;;
+	esac
+else 
+	xsetroot -name "TDP: UNKNOWN ERROR OCCURED"
+fi

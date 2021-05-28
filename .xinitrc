@@ -5,7 +5,7 @@ sysresources=/etc/X11/xinit/.Xresources
 sysmodmap=/etc/X11/xinit/.Xmodmap
 # Make sure this is before the 'exec' command or it won't be sourced.
 [ -f /etc/xprofile ] && . /etc/xprofile
-[ -f ~/.xprofile ] && . ~/.xprofile
+[ -f ~/.xprofile ] && ~/.xprofile --start &
 
 # merge in defaults and keymaps
 if [ -f $sysresources ]; then

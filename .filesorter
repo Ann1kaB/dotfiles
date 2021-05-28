@@ -10,51 +10,63 @@ dlimages="$HOME/Downloads/pics/"
 pictures="$HOME/Pictures"
 jars="$HOME/Downloads/jars/"
 
-for tar in $(find $Downloads -maxdepth 3 -type f | grep ".*.tar.*"); do
-	if [[ ! -d "$tarballs" ]]; then
-		mkdir -p $tarballs
-	fi
-	mv $tar $tarballs
+#for tar in $(find $Downloads -maxdepth 3 -type f | grep ".*.tar.*"); do
+#	if [[ ! -d "$tarballs" ]]; then
+#		mkdir -p $tarballs
+#	fi
+#	mv $tar $tarballs
+#
+#done
+#
+#for iso in $(find $Downloads -maxdepth 3 -type f | grep ".*.iso.*"); do
+#	if [[ ! -d "$ISOs" ]]; then
+#		mkdir -p $ISOs
+#	fi
+#	if [[ ! -e $ISOs/$iso ]]; then
+#		mv $iso $ISOs
+#	fi
+#done
+#
+#for zip in $(find $Downloads -maxdepth 3 -type f | egrep ".*.7z.*|.*.zip.*"); do
+#	if [[ ! -d "$zips" ]]; then
+#		mkdir -p $zips
+#	fi
+#	if [[ ! -e $zips/$zip ]]; then
+#		mv $zip $zips
+#	fi
+#done
+#
+#for jar in $(find $Downloads -maxdepth 3 -type f | grep ".*.jar.*"); do
+#        if [[ ! -d "$jars" ]]; then
+#                mkdir -p $jars
+#        fi
+#	if [[ ! -e $jars/$jar ]]; then
+#        	mv $jar $jars
+#	fi
+#done
 
-done
+#$(find $pictures -maxdepth 1 -type f | grep ".*.png.*")
 
-for iso in $(find $Downloads -maxdepth 3 -type f | grep ".*.iso.*"); do
-	if [[ ! -d "$ISOs" ]]; then
-		mkdir -p $ISOs
-	fi
-	if [[ ! -e $ISOs/$iso ]]; then
-		mv $iso $ISOs
-	fi
+for scrot in $pictures/*.png; do
+	#echo $scrot | egrep -o ".*[0-9]{4}-[0-9]{2}-[0-9]{2}"
+	#echo $test
+	if [[ "$scrot" =~ "[[:digit:]]{4}-05-07"  ]]; then
+    scrots+=($scrot)
+    echo $scrot
+  fi
 done
-
-for zip in $(find $Downloads -maxdepth 3 -type f | egrep ".*.7z.*|.*.zip.*"); do
-	if [[ ! -d "$zips" ]]; then
-		mkdir -p $zips
-	fi
-	if [[ ! -e $zips/$zip ]]; then
-		mv $zip $zips
-	fi
-done
-
-for jar in $(find $Downloads -maxdepth 3 -type f | grep ".*.jar.*"); do
-        if [[ ! -d "$jars" ]]; then
-                mkdir -p $jars
-        fi
-	if [[ ! -e $jars/$jar ]]; then
-        	mv $jar $jars
-	fi
-done
-
-for scrot in $(find $pictures -maxdepth 1 -type f | grep ".*.png.*"); do
-        for scrotdir in $(echo $scrot | egrep -o ".*[0-9]{4}-[0-9]{2}-[0-9]{2}" |  tr ' ' '\n' | sort | uniq); do
-                for scrotmv in $(echo $scrot | grep $scrotdir); do
-			if [[ ! -d $scrotdir ]]; then
-				mkdir $scrotdir
-			fi
-			mv $scrotmv $scrotdir/
-                done
-        done
-done
+exit 0
+  #for scrotdir in $(echo $scrot | egrep -o ".*[0-9]{4}-[0-9]{2}-[0-9]{2}" |  tr ' ' '\n' | sort | uniq); do
+for scrotdir in $scrots $(egrep -o ".*[0-9]{4}-[0-9]{2}-[0-9]{2}" |  tr ' ' '\n' | sort | uniq <<< $scrot); do
+    for scrotmv in $(grep $scrotdir <<< $scrot); do
+      echo hi
+      #if [[ ! -d $scrotdir ]]; then
+      #  mkdir $scrotdir
+      #fi
+      #mv $scrotmv $scrotdir/
+    done
+  done
+exit 0
 
 for img in $(find $Downloads -maxdepth 3 -type f | egrep ".*.svg.*|.*.png.*|.*.jpg.*|.*.gif.*"); do
 	if [[ ! -d "$dlimages" ]]; then
