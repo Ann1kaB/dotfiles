@@ -1,8 +1,8 @@
 #!/bin/sh
 if [ "$1" = "--start" ]; then
-  /usr/bin/prime-offload
-  pulseaudio &
-  wal -i ~/Pictures/wal/pink-anime.png
+  #/usr/bin/prime-offload
+  #pulseaudio &
+  wal -i ~/Pictures/1123013.jpg
   xrdb ~/.Xresources
   #lxsession &
   dunst &

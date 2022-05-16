@@ -1,67 +1,216 @@
 #!/bin/bash
 
-if [[ "$1" = "--up" ]]; then
-	VOLUME='+5%'
-	sink_command="set-sink-volume"
-	INDICATOR="VOLUME:"
-elif [[ "$1" = "--down" ]]; then
-	VOLUME='-5%'
-	sink_command="set-sink-volume"
-	INDICATOR="VOLUME:"
-elif [[ "$1" = "--mute" ]]; then
-	VOLUME="toggle"
-	sink_command="set-sink-mute"
-	INDICATOR="MUTE:"
+SEL_SINK="/tmp/_volume_current_sink"
+SEL_SOURCE="/tmp/volume_current_source"
+
+if [ -f $SEL_SINK ]; then
+	source $SEL_SINK
+elif [ -f $SEL_SOURCE ]; then
+	source $SEL_SOURCE
 fi
 
-command=$(pactl list sinks | awk '/Sink #|State:|Mute:/{print $2}' | sed 's/#//;s/no/ON/;s/yes/OFF/')
 
-for SINK in $command; do
-        num+=($SINK)
+_command=$(pactl list sinks | awk '/Sink #/{print $1,$2};/Description/' | sed 's/\t//')
+source_command=$(pactl list sources | awk '/Source #/{print $1,$2};/Description/' | sed 's/\t//')
+
+IFS=$'\n'
+for _s in $_command; do
+	dev_arr+=($_s)
 done
 
-for active in ${!num[@]}; do
-        if [ "${num[$active]}" = "ACTIVE" ]; then
-                active_sinks+=${num[$((active-1))]}
-                echo "ACTIVE ${active_sinks}"
-        fi
+for _d in ${!dev_arr[@]}; do
+	if (( $_d % 2 != 0 )); then
+		sep_dev_arr+=("${dev_arr[$(($_d-1))]} ${dev_arr[$_d]}")
+	fi
 done
 
+for _desc in ${sep_dev_arr[@]}; do
+	desc_arr+=("$(echo $_desc | cut -d':' -f2 | sed 's/^ //')")
+done
+
+for _num in ${sep_dev_arr[@]}; do
+	num_arr+=("$(echo $_num | cut -d'#' -f2 | cut -d' ' -f1)")
+done
+
+for _s_source in $source_command; do
+	dev_source_arr+=($_s_source)
+done
+
+for _d_source in ${!dev_source_arr[@]}; do
+	if (( $_d_source % 2 != 0 )); then
+		sep_dev_source_arr+=("${dev_source_arr[$(($_d_source-1))]} ${dev_source_arr[$_d_source]}")
+	fi
+done
+
+for _desc_source in ${sep_dev_source_arr[@]}; do
+	source_desc_arr+=("$(echo $_desc_source | cut -d':' -f2 | sed 's/^ //')")
+done
+
+for _num_source in ${sep_dev_source_arr[@]};do
+	source_num_arr+=("$(echo $_num_source | cut -d'#' -f2 | cut -d' ' -f1)")
+done
+
+# get $dev current volume level/mute status
 get_muted() {
-	for mute in ${!num[@]}; do
-		if [[ "${num[$mute]}" = "ON" || "${num[$mute]}" = "OFF" ]]; then
-			_vol+=${num[$mute]}
-		fi
-	done
+	if [ -f $SEL_SINK ]; then
+		_vol=$(pactl $get_sink_command $sel_num | awk '/Mute:/{print $2}' | sed 's/no/OFF/;s/yes/ON/')
+	else
+		_vol=$(pactl $get_sink_command ${num_arr[0]} | awk '/Mute:/{print $2}' | sed 's/no/OFF/;s/yes/ON/')
+	fi
 }
 
 get_volume() {
-	vol=$(pactl list sinks | awk '/[^\ ]Volume:/{print $5}')
-
-	for _v in $vol; do
-		_vol+=($_v)
-	done
+	if [ -f $SEL_SINK ]; then
+		_vol=$(pactl $get_sink_command $sel_num | awk '/Volume:/{print $5}')
+	else
+		_vol=$(pactl $get_sink_command ${num_arr[0]} | awk '/Volume:/{print $5}')
+	fi
 }
 
-for _s in $active_sinks; do
-        pactl $sink_command $_s $VOLUME
-	if [ "$1" != "--mute" ];then
-		get_volume
+get_source_volume() {
+	if [ -f $SEL_SOURCE ]; then
+		_vol=$(pactl $get_source_command $sel_source_num | awk '/Volume:/{print $5}')
 	else
-		get_muted
+		_vol=$(pactl $get_source_command ${source_num_arr[0]} | awk '/Volume:/{print $5}')
 	fi
-        xsetroot -name "${INDICATOR}${_vol[$_s]}"
-done
-echo ${active_sinks}
+}
 
-# default to sink first sink
-if [ -z "$active_sinks" ]; then
-        pactl $sink_command ${num[0]} $VOLUME
+get_source_mute() {
+	if [ -f $SEL_SOURCE ]; then
+		_vol=$(pactl $get_source_command $sel_source_num | awk '/Mute:/{print $2}' | sed 's/no/OFF/;s/yes/ON/')
+	else
+		_vol=$(pactl $get_source_comamnd ${source_num_arr[0]} | awk '/Mute:/{print $2}' | sed 's/no/OFF/;s/yes/ON/')
+	fi
+}
+
+switch_sel_sink() {
+	if [ -f $SEL_SOURCE ]; then
+		rm -rf $SEL_SOURCE
+	fi
+	if [ -z $sel_num ] || [ -z $sel_idex ]; then
+		echo "sel_num=${num_arr[0]}" > $SEL_SINK
+		echo "sel_idex=0" >> $SEL_SINK
+		echo "sel_desc=\"${desc_arr[0]}\"" >> $SEL_SINK
+	else
+		# iterate across sinks till we reach the end
+		idex=0
+		for _sink in ${num_arr[@]}; do
+			if [[ $sel_num = ${num_arr[-1]} ]];then 
+				echo "sel_num=${num_arr[0]}" > $SEL_SINK
+				echo "sel_idex=0" >> $SEL_SINK
+				echo "sel_desc=\"${desc_arr[0]}\"" >> $SEL_SINK
+				break
+			elif [[ ${num_arr[$idex]} -gt $sel_num ]]; then
+				echo "sel_num=${num_arr[$idex]}" > $SEL_SINK
+				echo "sel_idex=$idex" >> $SEL_SINK
+				echo "sel_desc=\"${desc_arr[$idex]}\"" >> $SEL_SINK
+				break
+			fi
+			idex=$((idex+1))
+		done
+	fi
+	source $SEL_SINK
+}
+
+switch_sel_source() {
+	if [ -f $SEL_SINK ]; then
+		rm -rf $SEL_SINK
+	fi
+	if [ -z $sel_source_num ] || [ -z $sel_source_idex ]; then
+		echo "sel_source_num=${source_num_arr[0]}" > $SEL_SOURCE
+		echo "sel_source_idex=0" >> $SEL_SOURCE
+		echo "sel_source_desc=\"${source_desc_arr[0]}\"" >> $SEL_SOURCE
+	else
+		# iterate across sources till we reach the end
+		s_idex=0
+		for _source in ${source_num_arr[@]}; do
+			if [[ $sel_source_num = ${source_num_arr[-1]} ]] ;then 
+				echo "sel_source_num=${source_num_arr[0]}" > $SEL_SOURCE
+				echo "sel_source_idex=0" >> $SEL_SOURCE
+				echo "sel_source_desc=\"${source_desc_arr[0]}\"" >> $SEL_SOURCE
+				break
+			elif [[ ${source_num_arr[$s_idex]} -gt $sel_source_num ]]; then	
+				echo else
+				echo "sel_source_num=${source_num_arr[$s_idex]}" > $SEL_SOURCE
+				echo "sel_source_idex=$s_idex" >> $SEL_SOURCE
+				echo "sel_source_desc=\"${source_desc_arr[$s_idex]}\"" >> $SEL_SOURCE
+				break
+			fi
+			s_idex=$((s_idex+1))
+		done
+	fi
+	source $SEL_SOURCE
+}
+
+if [[ "$1" = "--up" ]]; then
+	VOLUME='+5%'
+	sink_command="set-sink-volume"
+	source_command="set-source-volume"
+	get_sink_command="get-sink-volume"
+	get_source_command="get-source-volume"
+	INDICATOR="VOLUME:"
+
+elif [[ "$1" = "--down" ]]; then
+	VOLUME='-5%'
+	sink_command="set-sink-volume"
+	source_command="set-source-volume"
+	get_sink_command="get-sink-volume"
+	get_source_command="get-source-volume"
+	INDICATOR="VOLUME:"
+
+elif [[ "$1" = "--mute" ]]; then
+	VOLUME="toggle"
+	sink_command="set-sink-mute"
+	get_sink_command="get-sink-mute"
+	INDICATOR="MUTE:"
+
+elif [[ "$1" = "--switch-sink" ]]; then
+	switch_sel_sink
+	INDICATOR="SINK SWITCH:"
+
+elif [[ "$1" = "--switch-source" ]]; then
+	switch_sel_source
+	INDICATOR="SOURCE SWITCH:"
+
+elif [[ "$1" = "--source-mute" ]]; then
+	get_source_command="get-source-mute"
+	source_command="set-source-mute"
+	VOLUME="toggle"
+	INDICATOR="MUTE:"
+fi
+
+
+if [ -f $SEL_SINK ] && [ "$1" != "--source-mute" ]; then
+	if [ -n $VOLUME ]; then
+		pactl $sink_command $sel_num $VOLUME
+	fi
 	if [ "$1" != "--mute" ];then
 		get_volume
 	else
 		get_muted
 	fi
-        xsetroot -name "${INDICATOR}${_vol[0]}"
+        xsetroot -name "${sel_desc} ${INDICATOR}${_vol}"
+
+elif [ -f $SEL_SOURCE ] && [ "$1" != "--mute" ]; then
+	if [ -n $VOLUME ]; then
+		pactl $source_command $sel_source_num $VOLUME
+	fi
+	if [ "$1" != "--source-mute" ];then
+		get_source_volume
+	else
+		get_source_mute
+	fi
+        xsetroot -name "${sel_source_desc} MIC ${INDICATOR}${_vol}"
+elif [ "$1" != "--source-mute" ]; then
+	# default to first sink
+	if [ -n $VOLUME ]; then
+		pactl $sink_command ${num_arr[0]} $VOLUME
+	fi
+	if [ "$1" != "--mute" ];then
+		get_volume
+	else
+		get_muted
+	fi
+        xsetroot -name "${desc_arr[0]} ${INDICATOR}${_vol}"
 fi
 

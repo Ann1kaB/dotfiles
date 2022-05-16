@@ -1,6 +1,6 @@
-st.font: Fira Code:pixelsize=12:antialias=true:autohint=true;
+st.font: Hack Nerd Font Mono:pixelsize=12:antialias=true:autohint=true;
 
-st.borderpx: 10
+st.borderpx: 4
 st.xfps: 144
 st.actionfps: 144
 st.cursorshape: 2
@@ -10,39 +10,39 @@ st.shell: /bin/fish
 
 *termname: st-256color
 ! special
-*.foreground:   #ffbdfa
+*.foreground:   #9ec5e8
 *.background:   #000000
-*.cursorColor:  #ffbdfa
+*.cursorColor:  #9ec5e8
 
 ! black
-*.color0:       #f3abff
-*.color8:       #f9acff
+*.color0:       #00001c
+*.color8:       #6e89a2
 
 ! red
-*.color1:       #cb0872
-*.color9:       #b90b69
+*.color1:       #18348e
+*.color9:       #18338e
 
 ! green
-*.color2:       #00d8a5
-*.color10:      #00e8a6
+*.color2:       #215b9f
+*.color10:      #21579f
 
 ! yellow
-*.color3:       #c3f100
-*.color11:      #cff000
+*.color3:       #6b0bb5
+*.color11:      #671db5
 
 ! blue
-*.color4:       #008afb
-*.color12:      #0080f2
+*.color4:       #2d6bd3
+*.color12:      #2d6bd3
 
 ! magenta
-*.color5:       #f338ef
-*.color13:      #ff2dea
+*.color5:       #3593ee
+*.color13:      #3593ee
 
 ! cyan
-*.color6:       #00f5ff
-*.color14:      #00eaff
+*.color6:       #55bcdf
+*.color14:      #36b4df
 
 ! white
-*.color7:       #ffcaf8
-*.color15:      #ffc4f7
+*.color7:       #bad2e8
+*.color15:      #b5d0e8
 

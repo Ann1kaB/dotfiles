@@ -50,12 +50,12 @@ WIFI2=$(iwctl station wlp3s0 show | awk '/State/{print $2}' |\
 sed 's/disconnected/OFF/;s/connected/ON/')
 
 # seems to cause issues on new laptop rtl8822ce driver, so disabled for now.
-WIFICHANNEL=$(iwctl station wlp3s0 show | awk '/Frequency/{print $2}')
-if [ $WIFICHANNEL > 4900 ]; then
-  WIFIBAND="5GHz"
-else
-  WIFIBAND="2.4GHz"
-fi
+#WIFICHANNEL=$(iwctl station wlp3s0 show | awk '/Frequency/{print $2}')
+#if [ $WIFICHANNEL > 4900 ]; then
+#  WIFIBAND="5GHz"
+#else
+#  WIFIBAND="2.4GHz"
+#fi
 
 BAT=$(cat /sys/class/power_supply/BAT1/capacity)
 
@@ -66,6 +66,7 @@ done
 
 _name="MEM:$MEM // CPU:$CPUTEMP/${CPU}MHz/FAN:${CPUFAN}RPM/AMDGPU:${AMDGPUTEMP}°C\
 /${AMDGPUV}W/NVGPU:$NVGPUTEMP$NVGPU\
-/FAN:${GPUFAN}RPM // BAT:$BAT% // WIFI:$WIFI2/$WIFIBAND/RSSI:$WIFI"
+/FAN:${GPUFAN}RPM // BAT:$BAT%" 
+#WIFI:$WIFI2/$WIFIBAND/RSSI:$WIFI"
 
 xsetroot -name "$_name"
