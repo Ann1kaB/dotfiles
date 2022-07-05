@@ -5,9 +5,9 @@ STATUS=$(cat /sys/class/power_supply/BAT1/status)
 if [[ "$STATUS" = "Discharging" ]]; then
 	case $(ryzenadj --info | awk '/ slow-limit/{print $6}'| cut -d'.' -f1) in
 		12) cpupower frequency-set -g ondemand
-		ryzenadj --stapm-limit=35000 --fast-limit=40000 --slow-limit=30000
+		ryzenadj --stapm-limit=30000 --fast-limit=30000 --slow-limit=30000
 		xsetroot -name "Setting TDP to 30W" ;;
-		30) ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000
+		30) ryzenadj --stapm-limit=25000 --fast-limit=25000 --slow-limit=25000
 		xsetroot -name "Setting TDP to 25W" ;;
 		*)
 		# TDP 1

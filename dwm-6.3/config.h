@@ -2,10 +2,12 @@
 
 /* appearance */
 static const unsigned int borderpx  = 0;        /* border pixel of windows */
+static const int startwithgaps       = 0;        /* 1 means gaps are used by default */
+static const unsigned int gappx     = 10;       /* default gap between windows in pixels */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const char *fonts[]          = { "Fira Mono:size=10:style=Regular", "Noto Sans Symbols2:size=10" };
+static const char *fonts[]          = { "Fira Mono:size=10:style=Regular", "Noto Sans Symbols2:size=12" };
 static const char dmenufont[]       = "monospace:size=12";
 //#include "/home/hyperkvm/.cache/wal/colors-wal-dwm.h"
 static const char norm_fg[] = "#b5d0e8";
@@ -38,9 +40,18 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+	/* class      	  	instance    		title			tags mask     	isfloating   monitor */
+	{ "Gimp",     	  		NULL,			NULL,       				0,		1,           -1 },
+	{ "firefox",  	  		NULL,			NULL,       				1 << 8,		0,           -1 },
+	{ "discord",  	  		NULL,       		NULL,       				1,		0,           -1 },
+	{ "Pavucontrol", 		NULL,			"Volume Control",			1 << 2,		0,           -1 },
+	{ "Nvidia-settings", 		NULL,			"NVIDIA Settings",			1 << 2,		0,           -1 },
+	{ "dolphin-emu",  		NULL,			NULL,					1 << 3,		0,           -1 },
+	{ "Ryujinx",  			NULL,			"Ryujinx 1.0.0-ldn2.4",			1 << 3,		0,           -1 },
+	{ "Steam",			NULL,			"Steam",				1 << 4,		0,           -1 },
+	{ "an-anime-game-launcher",	NULL,			"An Anime Game Launcher - 2.7.0",	1 << 4,		0,           -1 },
+	//{ "St",				NULL,			NULL,					1 << 5,		0,           -1 },
+
 };
 
 //#include <X11/XF86keysym.h>
@@ -49,7 +60,7 @@ static const Rule rules[] = {
 static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals */
-static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
+static const int lockfullscreen = 0; /* 1 will force focus on the fullscreen window */
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
@@ -82,6 +93,7 @@ static const char *voldowncmd[] = { status, "volume --down", sleep_time, NULL };
 static const char *micmutecmd[] = { status, "volume --source-mute", sleep_time, NULL };
 static const char *switchsink[] = { status, "volume --switch-sink", sleep_time, NULL };
 static const char *switchsource[] = { status, "volume --switch-source", sleep_time, NULL };
+static const char *switchcodec[] = { status, "volume --switch-codec", sleep_time, NULL };
 //brightness control
 static const char *brupcmd[] = { status, "backlight --up", sleep_time, NULL };
 static const char *brdowncmd[] = { status, "backlight --down", sleep_time, NULL };
@@ -130,6 +142,11 @@ static Key keys[] = {
         { MODKEY|ShiftMask,             XK_c,                           killclient,     {0} },
         { MODKEY|ShiftMask,             XK_space,                       togglefloating, {0} },
         { MODKEY|ShiftMask,             XK_0,                           tag,            {.ui = ~0 } },
+        { MODKEY|ShiftMask,             XK_period, 			tagmon,         {.i = +1 } },
+        { MODKEY,                       XK_minus,  			setgaps,        {.i = -5 } },
+        { MODKEY,                       XK_equal,  			setgaps,        {.i = +5 } },
+        { MODKEY|ShiftMask,             XK_minus,  			setgaps,        {.i = GAP_RESET } },
+        { MODKEY|ShiftMask,             XK_equal,  			setgaps,        {.i = GAP_TOGGLE} },
         { MODKEY|ShiftMask,             XK_Return,                      spawn,          {.v = termcmd } },
         { MODKEY,                       XK_F9,                          spawn,          {.v = xrandrkey} },
         { MODKEY,                       XK_s,                           spawn,          {.v = tracker} },
@@ -144,6 +161,7 @@ static Key keys[] = {
 	{ ShiftMask,			XF86XK_AudioMute,		spawn,		{.v = switchsink } },
 	{ MODKEY,			XK_F4,				spawn,		{.v = micmutecmd } },
 	{ MODKEY|ShiftMask,		XK_F4,				spawn,		{.v = switchsource } },
+	{ ShiftMask,			XK_F4,				spawn,		{.v = switchcodec } },
         { 0,                            XF86XK_MonBrightnessUp,         spawn,          {.v = brupcmd} },
         { 0,                            XF86XK_MonBrightnessDown,       spawn,          {.v = brdowncmd} },
         { 0,                            XF86XK_AudioNext,               spawn,          {.v = tracknext} },

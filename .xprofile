@@ -1,12 +1,17 @@
 #!/bin/sh
 if [ "$1" = "--start" ]; then
-  #/usr/bin/prime-offload
-  #pulseaudio &
   wal -i ~/Pictures/1123013.jpg
   xrdb ~/.Xresources
-  #lxsession &
+  lxsession &
   dunst &
+  xset dpms 3600 3600 3600
   xss-lock -n /usr/share/doc/xss-lock/dim-screen.sh -- slock &
+  xset s 3600 3600
+  picom &
+  piactl connect &
+  joy.sh &
+  discord &
+  firefox &
 fi
 
 while true; do

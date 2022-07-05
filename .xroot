@@ -1,13 +1,28 @@
 #!/bin/sh
 
 VER=$(dwm -v 2>&1)
-DATE="$(/bin/date +"%A %d, %B // %H:%M")"
+DATE="$(/bin/date +"%a %d, %b // %I:%M%p")"
 BAT=$(cat /sys/class/power_supply/BAT1/capacity)
-if [ ! -d /sys/class/power_supply/sony_controller_battery_*/ ]; then
-	ROOT="$DATE // $VER // BAT:$BAT%"
+VPN=$(piactl get connectionstate | sed 's/Connected/ON/;s/Disconnected/OFF/')
+BTDEV=$(bluetoothctl devices | awk '{print $2}')
+DS4BAT_FOLDER="/sys/class/power_supply/sony_controller_battery_*/"
+
+for _bt in $BTDEV; do
+	if [ $(bluetoothctl info $_bt | awk '/Icon:/{print $2}') = "audio-headset" ]; then
+		_bthp=$_bt
+		break
+	fi
+done
+
+if [ ! -d $DS4BAT_FOLDER ] && [ -z $_bthp ]; then
+	ROOT="$DATE // $VER // BAT:$BAT% // VPN:$VPN"
+elif [ -n $_bthp ] && [ ! -d $DS4BAT_FOLDER ]; then
+	BTHP_BAT=$(bluetoothctl info $_bthp | awk '/Battery Percentage/{print $4}' | sed 's/[\(\)]//g')
+	ROOT="$DATE // $VER // BAT:$BAT%/BTHP:$BTHP_BAT% // VPN:$VPN"
 else
+	BTHP_BAT=$(bluetoothctl info $_bthp | awk '/Battery Percentage/{print $4}' | sed 's/[\(\)]//g')
 	DS4BAT=$(cat /sys/class/power_supply/sony_controller_battery_*/capacity)
-	ROOT="$DATE // $VER // BAT:$BAT% DS4BAT:$DS4BAT%"
+	ROOT="$DATE // $VER // BAT:$BAT% DS4BAT:$DS4BAT%/BTHP:$BTHP_BAT% // VPN:$VPN"
 fi
 
 xsetroot -name "${ROOT}"

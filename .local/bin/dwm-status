@@ -31,7 +31,7 @@ if [ -n "$1" ]; then
     kill $(pgrep -f ./.xprofile)
   fi
   if [ $(($(pgrep -f $PROG_NAME | wc -l))) -gt 2 ]; then
-    kill $(pgrep -f $PROG_NAME | head -n -1)
+    killall $(pgrep -f $PROG_NAME | head -n -1)
   fi
   sleep $COOLDOWN
   if [ $(pgrep -f .xprofile | wc -l) -eq 0 ]; then
@@ -42,5 +42,5 @@ fi
 
 case $STATE in
 	0) echo 1 > $STATE_FILE_PATH; [ -n "$(pgrep -f ./.xprofile)" ] && kill $(pgrep -f ./.xprofile); main ;;
-	1) echo 0 > $STATE_FILE_PATH; ~/.xprofile; kill $(pgrep -f $PROG_NAME) ;;
+	1) echo 0 > $STATE_FILE_PATH; ~/.xprofile; kill $(pgrep -f $PROG_NAME); main ;;
 esac

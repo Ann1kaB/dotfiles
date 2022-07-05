@@ -1,54 +1,73 @@
 #!/bin/bash
 
 SEL_SINK="/tmp/_volume_current_sink"
-SEL_SOURCE="/tmp/volume_current_source"
+SEL_SOURCE="/tmp/_volume_current_source"
+SEL_CARD_PROFILE="/tmp/_volume_current_card_profile"
+
+
+
+_command=$(pactl list sinks | awk '/Sink #/{print $1,$2};/Description/;/Name:/{print $2}' | sed 's/\t//')
+source_command=$(pactl list sources | awk '/Source #/{print $1,$2};/Description/' | sed 's/\t//')
+card_command=$(pactl list cards short | awk '{print $2}')
+
+IFS=$'\n'
+loop_sink() {
+	for _s in $_command; do
+		dev_arr+=($_s)
+	done
+
+	for _d in ${!dev_arr[@]}; do
+		if (( $_d % 3 == 0  )); then
+			sep_dev_arr+=("${dev_arr[$(($_d-2))]} ${dev_arr[$_d]} ${dev_arr[$(($_d-1))]}")
+		fi
+	done
+
+	for _desc in ${sep_dev_arr[@]}; do
+		desc_arr+=("$(echo $_desc | cut -d':' -f2 | sed 's/^ //')")
+	done
+
+	for _num in ${sep_dev_arr[@]}; do
+		num_arr+=("$(echo $_num | cut -d'#' -f2 | cut -d' ' -f1)")
+	done
+
+	for _card in ${sep_dev_arr[@]}; do
+		card_arr+=("$(echo $_card | cut -d' ' -f1 | sed 's/_output/_card/')")
+	done
+
+	for _c in ${card_arr[@]}; do
+		card_name_arr+=("$(echo $_c | sed 's/.[^\.]*$//')")
+	done
+}
+loop_source() {
+	for _s_source in $source_command; do
+		dev_source_arr+=($_s_source)
+	done
+	
+	for _d_source in ${!dev_source_arr[@]}; do
+		if (( $_d_source % 2 != 0 )); then
+			sep_dev_source_arr+=("${dev_source_arr[$(($_d_source-1))]} ${dev_source_arr[$_d_source]}")
+		fi
+	done
+	
+	for _desc_source in ${sep_dev_source_arr[@]}; do
+		source_desc_arr+=("$(echo $_desc_source | cut -d':' -f2 | sed 's/^ //')")
+	done
+	
+	for _num_source in ${sep_dev_source_arr[@]};do
+		source_num_arr+=("$(echo $_num_source | cut -d'#' -f2 | cut -d' ' -f1)")
+	done
+}
 
 if [ -f $SEL_SINK ]; then
 	source $SEL_SINK
+	if [ -f $SEL_CARD_PROFILE ]; then
+		source $SEL_CARD_PROFILE
+	fi
+	loop_sink
 elif [ -f $SEL_SOURCE ]; then
 	source $SEL_SOURCE
+	loop_source
 fi
-
-
-_command=$(pactl list sinks | awk '/Sink #/{print $1,$2};/Description/' | sed 's/\t//')
-source_command=$(pactl list sources | awk '/Source #/{print $1,$2};/Description/' | sed 's/\t//')
-
-IFS=$'\n'
-for _s in $_command; do
-	dev_arr+=($_s)
-done
-
-for _d in ${!dev_arr[@]}; do
-	if (( $_d % 2 != 0 )); then
-		sep_dev_arr+=("${dev_arr[$(($_d-1))]} ${dev_arr[$_d]}")
-	fi
-done
-
-for _desc in ${sep_dev_arr[@]}; do
-	desc_arr+=("$(echo $_desc | cut -d':' -f2 | sed 's/^ //')")
-done
-
-for _num in ${sep_dev_arr[@]}; do
-	num_arr+=("$(echo $_num | cut -d'#' -f2 | cut -d' ' -f1)")
-done
-
-for _s_source in $source_command; do
-	dev_source_arr+=($_s_source)
-done
-
-for _d_source in ${!dev_source_arr[@]}; do
-	if (( $_d_source % 2 != 0 )); then
-		sep_dev_source_arr+=("${dev_source_arr[$(($_d_source-1))]} ${dev_source_arr[$_d_source]}")
-	fi
-done
-
-for _desc_source in ${sep_dev_source_arr[@]}; do
-	source_desc_arr+=("$(echo $_desc_source | cut -d':' -f2 | sed 's/^ //')")
-done
-
-for _num_source in ${sep_dev_source_arr[@]};do
-	source_num_arr+=("$(echo $_num_source | cut -d'#' -f2 | cut -d' ' -f1)")
-done
 
 # get $dev current volume level/mute status
 get_muted() {
@@ -83,6 +102,35 @@ get_source_mute() {
 	fi
 }
 
+get_profile_list() {
+	_profile_list=$(pactl list cards |\
+		awk '/Name:/{print $2};/Profiles:/{flag=1;next}/Active Profile:/{flag=0}flag' |\
+		sed 's/\t//g' | cut -d' ' -f1 | sed 's/:$//')
+	_active_profile_list=$(pactl list cards | awk '/Name:/{print $2};/Active Profile:/{print $3}')
+	for _aplist in $_active_profile_list; do
+		if [[ "$_aplist" =~ .*"_card".* ]] && [ "$_aplist" != "$sel_card_name" ]; then
+			_amatch=0
+		fi
+		if [ $_amatch -eq 1 ]; then
+			_active_profile_arr+=($_aplist)
+		fi
+		if [ "$_aplist" = "$sel_card_name" ]; then
+			_amatch=1
+		fi
+	done
+	for _plist in $_profile_list; do
+		if [[ "$_plist" =~ .*"_card".* ]] && [ "$_plist" != "$sel_card_name" ]; then
+			_match=0
+		fi
+		if [ $_match -eq 1 ]; then
+			_supported_profile_arr+=($_plist)
+		fi
+		if [ "$_plist" = "$sel_card_name" ]; then
+			_match=1
+		fi
+	done
+}
+
 switch_sel_sink() {
 	if [ -f $SEL_SOURCE ]; then
 		rm -rf $SEL_SOURCE
@@ -91,6 +139,7 @@ switch_sel_sink() {
 		echo "sel_num=${num_arr[0]}" > $SEL_SINK
 		echo "sel_idex=0" >> $SEL_SINK
 		echo "sel_desc=\"${desc_arr[0]}\"" >> $SEL_SINK
+		echo "sel_card_name=${card_name_arr[0]}" >> $SEL_SINK
 	else
 		# iterate across sinks till we reach the end
 		idex=0
@@ -99,11 +148,13 @@ switch_sel_sink() {
 				echo "sel_num=${num_arr[0]}" > $SEL_SINK
 				echo "sel_idex=0" >> $SEL_SINK
 				echo "sel_desc=\"${desc_arr[0]}\"" >> $SEL_SINK
+				echo "sel_card_name=${card_name_arr[0]}" >> $SEL_SINK
 				break
 			elif [[ ${num_arr[$idex]} -gt $sel_num ]]; then
 				echo "sel_num=${num_arr[$idex]}" > $SEL_SINK
 				echo "sel_idex=$idex" >> $SEL_SINK
 				echo "sel_desc=\"${desc_arr[$idex]}\"" >> $SEL_SINK
+				echo "sel_card_name=${card_name_arr[$idex]}" >> $SEL_SINK
 				break
 			fi
 			idex=$((idex+1))
@@ -130,7 +181,6 @@ switch_sel_source() {
 				echo "sel_source_desc=\"${source_desc_arr[0]}\"" >> $SEL_SOURCE
 				break
 			elif [[ ${source_num_arr[$s_idex]} -gt $sel_source_num ]]; then	
-				echo else
 				echo "sel_source_num=${source_num_arr[$s_idex]}" > $SEL_SOURCE
 				echo "sel_source_idex=$s_idex" >> $SEL_SOURCE
 				echo "sel_source_desc=\"${source_desc_arr[$s_idex]}\"" >> $SEL_SOURCE
@@ -141,6 +191,30 @@ switch_sel_source() {
 	fi
 	source $SEL_SOURCE
 }
+
+switch_card_profile() {
+	if [ -z $sel_card_profile ]; then
+		echo "sel_card_profile=${_supported_profile_arr[1]}" > $SEL_CARD_PROFILE
+		echo "sel_profile_idex=1" >> $SEL_CARD_PROFILE
+	elif [ -n $sel_card_name ]; then
+		c_idex=0
+		for _card_profiles in ${_supported_profile_arr[@]}; do
+			if [[ $sel_card_profile = ${_supported_profile_arr[-1]} ]]; then
+				echo "sel_card_profile=${_supported_profile_arr[1]}" > $SEL_CARD_PROFILE
+				echo "sel_profile_idex=1" >> $SEL_CARD_PROFILE
+				break
+			elif [[ $c_idex -gt $sel_profile_idex ]]; then
+				echo "sel_card_profile=${_supported_profile_arr[$c_idex]}" > $SEL_CARD_PROFILE
+				echo "sel_profile_idex=$c_idex" >> $SEL_CARD_PROFILE
+				break
+			fi
+			c_idex=$((c_idex+1))
+		done
+	fi
+	source $SEL_CARD_PROFILE
+}
+
+	
 
 if [[ "$1" = "--up" ]]; then
 	VOLUME='+5%'
@@ -177,16 +251,23 @@ elif [[ "$1" = "--source-mute" ]]; then
 	source_command="set-source-mute"
 	VOLUME="toggle"
 	INDICATOR="MUTE:"
+elif [[ "$1" = "--switch-codec" ]]; then
+	get_profile_list
+	switch_card_profile
+	INDICATOR="CODEC SWITCH:"
 fi
 
 
-if [ -f $SEL_SINK ] && [ "$1" != "--source-mute" ]; then
+if [ "$1" = "--switch-codec" ]; then
+	pactl set-card-profile $sel_card_name $sel_card_profile
+	xsetroot -name "${sel_desc} ${INDICATOR}${sel_card_profile}"
+elif [ -f $SEL_SINK ] && [ "$1" != "--source-mute" ]; then
 	if [ -n $VOLUME ]; then
 		pactl $sink_command $sel_num $VOLUME
 	fi
 	if [ "$1" != "--mute" ];then
 		get_volume
-	else
+	elif [ "$1" != "--switch-codec" ]; then
 		get_muted
 	fi
         xsetroot -name "${sel_desc} ${INDICATOR}${_vol}"
@@ -201,6 +282,7 @@ elif [ -f $SEL_SOURCE ] && [ "$1" != "--mute" ]; then
 		get_source_mute
 	fi
         xsetroot -name "${sel_source_desc} MIC ${INDICATOR}${_vol}"
+
 elif [ "$1" != "--source-mute" ]; then
 	# default to first sink
 	if [ -n $VOLUME ]; then
@@ -213,4 +295,3 @@ elif [ "$1" != "--source-mute" ]; then
 	fi
         xsetroot -name "${desc_arr[0]} ${INDICATOR}${_vol}"
 fi
-

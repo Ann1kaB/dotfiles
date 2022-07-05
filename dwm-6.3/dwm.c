@@ -57,6 +57,9 @@
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
+#define GAP_TOGGLE 100
+#define GAP_RESET  0
+
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
 enum { SchemeNorm, SchemeSel }; /* color schemes */
@@ -119,6 +122,8 @@ struct Monitor {
 	int by;               /* bar geometry */
 	int mx, my, mw, mh;   /* screen size */
 	int wx, wy, ww, wh;   /* window area  */
+	int gappx;	      /* gaps between windows */
+	int drawwithgaps;     /* toggle gaps */
 	unsigned int seltags;
 	unsigned int sellt;
 	unsigned int tagset[2];
@@ -200,6 +205,7 @@ static void sendmon(Client *c, Monitor *m);
 static void setclientstate(Client *c, long state);
 static void setfocus(Client *c);
 static void setfullscreen(Client *c, int fullscreen);
+static void setgaps(const Arg *arg);
 static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setup(void);
@@ -522,7 +528,7 @@ clientmessage(XEvent *e)
 		if (cme->data.l[1] == netatom[NetWMFullscreen]
 		|| cme->data.l[2] == netatom[NetWMFullscreen])
 			setfullscreen(c, (cme->data.l[0] == 1 /* _NET_WM_STATE_ADD    */
-				|| (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
+				|| cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */));
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
 		if (c != selmon->sel && !c->isurgent)
 			seturgent(c, 1);
@@ -552,7 +558,6 @@ void
 configurenotify(XEvent *e)
 {
 	Monitor *m;
-	Client *c;
 	XConfigureEvent *ev = &e->xconfigure;
 	int dirty;
 
@@ -565,9 +570,6 @@ configurenotify(XEvent *e)
 			drw_resize(drw, sw, bh);
 			updatebars();
 			for (m = mons; m; m = m->next) {
-				for (c = m->clients; c; c = c->next)
-					if (c->isfullscreen)
-						resizeclient(c, m->mx, m->my, m->mw, m->mh);
 				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
 			}
 			focus(NULL);
@@ -639,6 +641,8 @@ createmon(void)
 	m->nmaster = nmaster;
 	m->showbar = showbar;
 	m->topbar = topbar;
+	m->gappx = gappx;
+	m->drawwithgaps = startwithgaps;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
@@ -706,7 +710,7 @@ drawbar(Monitor *m)
 		return;
 
 	/* draw status first so it can be overdrawn by tags later */
-	if (m == selmon) { /* status is only drawn on selected monitor */
+	if (m == selmon || 1) { /* status is only drawn on selected monitor */
 		drw_setscheme(drw, scheme[SchemeNorm]);
 		tw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
 		drw_text(drw, m->ww - tw, 0, tw, bh, 0, stext, 0);
@@ -800,6 +804,12 @@ focus(Client *c)
 		attachstack(c);
 		grabbuttons(c, 1);
 		XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColBorder].pixel);
+                if (!selmon->drawwithgaps && !c->isfloating) {
+			XWindowChanges wc;
+                        wc.sibling = selmon->barwin;
+                        wc.stack_mode = Below;
+                        XConfigureWindow(dpy, c->win, CWSibling | CWStackMode, &wc);
+                }
 		setfocus(c);
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
@@ -1116,7 +1126,10 @@ monocle(Monitor *m)
 	if (n > 0) /* override layout symbol */
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
-		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
+		if (selmon->drawwithgaps)
+			resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
+		else
+			resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
 }
 
 void
@@ -1146,8 +1159,6 @@ movemouse(const Arg *arg)
 	Time lasttime = 0;
 
 	if (!(c = selmon->sel))
-		return;
-	if (c->isfullscreen) /* no support moving fullscreen windows by mouse */
 		return;
 	restack(selmon);
 	ocx = c->x;
@@ -1286,6 +1297,15 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	c->oldw = c->w; c->w = wc.width = w;
 	c->oldh = c->h; c->h = wc.height = h;
 	wc.border_width = c->bw;
+	if (!selmon->drawwithgaps && /* this is the noborderfloatingfix patch, slightly modified so that it will work if, and only if, gaps are disabled. */
+	    (((nexttiled(c->mon->clients) == c && !nexttiled(c->next)) /* these two first lines are the only ones changed. if you are manually patching and have noborder installed already, just change these lines; or conversely, just remove this section if the noborder patch is not desired ;) */
+	    || &monocle == c->mon->lt[c->mon->sellt]->arrange))
+	    && !c->isfullscreen && !c->isfloating
+	    && NULL != c->mon->lt[c->mon->sellt]->arrange) {
+	        c->w = wc.width += c->bw * 2;
+	        c->h = wc.height += c->bw * 2;
+	        wc.border_width = 0;
+	}
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
@@ -1295,22 +1315,33 @@ void
 resizemouse(const Arg *arg)
 {
 	int ocx, ocy, nw, nh;
+	int ocx2, ocy2, nx, ny;
 	Client *c;
 	Monitor *m;
 	XEvent ev;
+	int horizcorner, vertcorner;
+	int di;
+	unsigned int dui;
+	Window dummy;
 	Time lasttime = 0;
 
 	if (!(c = selmon->sel))
 		return;
-	if (c->isfullscreen) /* no support resizing fullscreen windows by mouse */
-		return;
 	restack(selmon);
 	ocx = c->x;
 	ocy = c->y;
+	ocx2 = c->x + c->w;
+	ocy2 = c->y + c->h;
 	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
 		None, cursor[CurResize]->cursor, CurrentTime) != GrabSuccess)
 		return;
-	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
+	if (!XQueryPointer (dpy, c->win, &dummy, &dummy, &di, &di, &nx, &ny, &dui))
+		return;
+	horizcorner = nx < c->w / 2;
+	vertcorner  = ny < c->h / 2;
+	XWarpPointer (dpy, None, c->win, 0, 0, 0, 0,
+			horizcorner ? (-c->bw) : (c->w + c->bw -1),
+			vertcorner  ? (-c->bw) : (c->h + c->bw -1));
 	do {
 		XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &ev);
 		switch(ev.type) {
@@ -1324,8 +1355,11 @@ resizemouse(const Arg *arg)
 				continue;
 			lasttime = ev.xmotion.time;
 
-			nw = MAX(ev.xmotion.x - ocx - 2 * c->bw + 1, 1);
-			nh = MAX(ev.xmotion.y - ocy - 2 * c->bw + 1, 1);
+			nx = horizcorner ? ev.xmotion.x : c->x;
+			ny = vertcorner ? ev.xmotion.y : c->y;
+			nw = MAX(horizcorner ? (ocx2 - nx) : (ev.xmotion.x - ocx - 2 * c->bw + 1), 1);
+			nh = MAX(vertcorner ? (ocy2 - ny) : (ev.xmotion.y - ocy - 2 * c->bw + 1), 1);
+
 			if (c->mon->wx + nw >= selmon->wx && c->mon->wx + nw <= selmon->wx + selmon->ww
 			&& c->mon->wy + nh >= selmon->wy && c->mon->wy + nh <= selmon->wy + selmon->wh)
 			{
@@ -1334,11 +1368,13 @@ resizemouse(const Arg *arg)
 					togglefloating(NULL);
 			}
 			if (!selmon->lt[selmon->sellt]->arrange || c->isfloating)
-				resize(c, c->x, c->y, nw, nh, 1);
+				resize(c, nx, ny, nw, nh, 1);
 			break;
 		}
 	} while (ev.type != ButtonRelease);
-	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
+	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
+		      horizcorner ? (-c->bw) : (c->w + c->bw - 1),
+		      vertcorner ? (-c->bw) : (c->h + c->bw - 1));
 	XUngrabPointer(dpy, CurrentTime);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 	if ((m = recttomon(c->x, c->y, c->w, c->h)) != selmon) {
@@ -1480,25 +1516,31 @@ setfullscreen(Client *c, int fullscreen)
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 			PropModeReplace, (unsigned char*)&netatom[NetWMFullscreen], 1);
 		c->isfullscreen = 1;
-		c->oldstate = c->isfloating;
-		c->oldbw = c->bw;
-		c->bw = 0;
-		c->isfloating = 1;
-		resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
-		XRaiseWindow(dpy, c->win);
 	} else if (!fullscreen && c->isfullscreen){
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 			PropModeReplace, (unsigned char*)0, 0);
 		c->isfullscreen = 0;
-		c->isfloating = c->oldstate;
-		c->bw = c->oldbw;
-		c->x = c->oldx;
-		c->y = c->oldy;
-		c->w = c->oldw;
-		c->h = c->oldh;
-		resizeclient(c, c->x, c->y, c->w, c->h);
-		arrange(c->mon);
 	}
+}
+
+void
+setgaps(const Arg *arg)
+{
+	switch(arg->i)
+	{
+		case GAP_TOGGLE:
+			selmon->drawwithgaps = !selmon->drawwithgaps;
+			break;
+		case GAP_RESET:
+			selmon->gappx = gappx;
+			break;
+		default:
+			if (selmon->gappx + arg->i < 0)
+				selmon->gappx = 0;
+			else
+				selmon->gappx += arg->i;
+	}
+	arrange(selmon);
 }
 
 void
@@ -1622,7 +1664,7 @@ showhide(Client *c)
 	if (ISVISIBLE(c)) {
 		/* show clients top down */
 		XMoveWindow(dpy, c->win, c->x, c->y);
-		if ((!c->mon->lt[c->mon->sellt]->arrange || c->isfloating) && !c->isfullscreen)
+		if (!c->mon->lt[c->mon->sellt]->arrange || c->isfloating)
 			resize(c, c->x, c->y, c->w, c->h, 0);
 		showhide(c->snext);
 	} else {
@@ -1683,23 +1725,42 @@ tile(Monitor *m)
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
 	if (n == 0)
 		return;
-
-	if (n > m->nmaster)
-		mw = m->nmaster ? m->ww * m->mfact : 0;
-	else
-		mw = m->ww;
-	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-		if (i < m->nmaster) {
-			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
-			if (my + HEIGHT(c) < m->wh)
-				my += HEIGHT(c);
-		} else {
-			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
-			if (ty + HEIGHT(c) < m->wh)
-				ty += HEIGHT(c);
-		}
+        if (m->drawwithgaps) { /* draw with fullgaps logic */
+                if (n > m->nmaster)
+                        mw = m->nmaster ? m->ww * m->mfact : 0;
+                else
+                        mw = m->ww - m->gappx;
+                for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+                        if (i < m->nmaster) {
+                                h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gappx;
+                                resize(c, m->wx + m->gappx, m->wy + my, mw - (2*c->bw) - m->gappx, h - (2*c->bw), 0);
+                                if (my + HEIGHT(c) + m->gappx < m->wh)
+                                        my += HEIGHT(c) + m->gappx;
+                        } else {
+                                h = (m->wh - ty) / (n - i) - m->gappx;
+                                resize(c, m->wx + mw + m->gappx, m->wy + ty, m->ww - mw - (2*c->bw) - 2*m->gappx, h - (2*c->bw), 0);
+                                if (ty + HEIGHT(c) + m->gappx < m->wh)
+                                        ty += HEIGHT(c) + m->gappx;
+                        }
+        } else { /* draw with singularborders logic */
+                if (n > m->nmaster)
+                        mw = m->nmaster ? m->ww * m->mfact : 0;
+                else
+                        mw = m->ww;
+                for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+                        if (i < m->nmaster) {
+                                h = (m->wh - my) / (MIN(n, m->nmaster) - i);
+                                if (n == 1)
+                                        resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
+                                else
+                                        resize(c, m->wx - c->bw, m->wy + my, mw - c->bw, h - c->bw, False);
+                                my += HEIGHT(c) - c->bw;
+                        } else {
+                                h = (m->wh - ty) / (n - i);
+                                resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
+                                ty += HEIGHT(c) - c->bw;
+                        }
+        }
 }
 
 void
@@ -1715,8 +1776,6 @@ void
 togglefloating(const Arg *arg)
 {
 	if (!selmon->sel)
-		return;
-	if (selmon->sel->isfullscreen) /* no support for fullscreen windows */
 		return;
 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
 	if (selmon->sel->isfloating)
@@ -1993,9 +2052,11 @@ updatesizehints(Client *c)
 void
 updatestatus(void)
 {
+	Monitor* m;
 	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
 		strcpy(stext, "dwm-"VERSION);
-	drawbar(selmon);
+	for(m = mons; m; m = m->next)
+		drawbar(m);
 }
 
 void
