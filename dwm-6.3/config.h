@@ -7,8 +7,13 @@ static const unsigned int gappx     = 10;       /* default gap between windows i
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const char *fonts[]          = { "Fira Mono:size=10:style=Regular", "Noto Sans Symbols2:size=12" };
-static const char dmenufont[]       = "monospace:size=12";
+static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
+static const unsigned int systrayonleft = 0;           /* 0: systray in the right corner, >0: systray on left of status text */
+static const unsigned int systrayspacing = 2;   /* systray spacing */
+static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
+static const int showsystray        = 1;     /* 0 means no systray */
+static const char *fonts[]          = { "FiraCodeMedium:size=10", "FontAwesome6Free:size=11:antialias=true:style=solid", "FontAwesome6Free:size=11:antialias=true:style=regular" };
+static const char dmenufont[]       = "monospace:size=10";
 //#include "/home/hyperkvm/.cache/wal/colors-wal-dwm.h"
 static const char norm_fg[] = "#b5d0e8";
 static const char norm_bg[] = "#000000";
@@ -33,24 +38,23 @@ static const char *colors[][3]      = {
 #include <X11/XF86keysym.h>
 
 /* tagging */
-static const char *tags[] = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
+static const char *tags[] = { "", "", "", "", "", "", "七", "八", "九" };
 
 static const Rule rules[] = {
 	/* xprop(1):
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      	  	instance    		title			tags mask     	isfloating   monitor */
-	{ "Gimp",     	  		NULL,			NULL,       				0,		1,           -1 },
-	{ "firefox",  	  		NULL,			NULL,       				1 << 8,		0,           -1 },
-	{ "discord",  	  		NULL,       		NULL,       				1,		0,           -1 },
-	{ "Pavucontrol", 		NULL,			"Volume Control",			1 << 2,		0,           -1 },
-	{ "Nvidia-settings", 		NULL,			"NVIDIA Settings",			1 << 2,		0,           -1 },
-	{ "dolphin-emu",  		NULL,			NULL,					1 << 3,		0,           -1 },
-	{ "Ryujinx",  			NULL,			"Ryujinx 1.0.0-ldn2.4",			1 << 3,		0,           -1 },
-	{ "Steam",			NULL,			"Steam",				1 << 4,		0,           -1 },
-	{ "an-anime-game-launcher",	NULL,			"An Anime Game Launcher - 2.7.0",	1 << 4,		0,           -1 },
-	//{ "St",				NULL,			NULL,					1 << 5,		0,           -1 },
+	/* class      	  		instance        title			tags mask     	isfloating   monitor */
+	{ "firefox",  	  		NULL,		NULL,       		1 << 1,		0,           -1 },
+	{ "discord",  	  		NULL,  		NULL,       		1 << 3,		0,           -1 },
+	{ "discord-screenaudio",  	NULL,  		NULL,       		1 << 3,		0,           -1 },
+	{ "Pavucontrol", 		NULL,		"Volume Control",	1 << 0,		0,           -1 },
+	{ "Nvidia-settings", 		NULL,		"NVIDIA Settings",	1 << 0,		0,           -1 },
+	{ "dolphin-emu",  		NULL,		NULL,			1 << 4,		0,           -1 },
+	{ "Ryujinx",  			NULL,		NULL,			1 << 4,		0,           -1 },
+	{ "Steam",			NULL,		"Steam",		1 << 4,		0,           -1 },
+	{ "an-anime-game-launcher",	NULL,		NULL,			1 << 4,		0,           -1 },
 
 };
 

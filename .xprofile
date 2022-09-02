@@ -1,5 +1,6 @@
 #!/bin/sh
 if [ "$1" = "--start" ]; then
+  /usr/bin/prime-offload
   wal -i ~/Pictures/1123013.jpg
   xrdb ~/.Xresources
   lxsession &
@@ -9,9 +10,7 @@ if [ "$1" = "--start" ]; then
   xset s 3600 3600
   picom &
   piactl connect &
-  joy.sh &
-  discord &
-  firefox &
+ # joy.sh &
 fi
 
 while true; do

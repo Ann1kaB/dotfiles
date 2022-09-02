@@ -12,6 +12,7 @@ main() {
     STATE=$(cat $STATE_FILE_PATH)
     ~/.sysxroot
     [ -n "$(pgrep -f ./.xprofile)" ] && kill $(pgrep -f ./.xprofile)
+    [ -z $(pidof Xorg) ] && exit
     sleep 5
   done
 }

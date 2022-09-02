@@ -1,10 +1,11 @@
-st.font: Hack Nerd Font Mono:pixelsize=12:antialias=true:autohint=true;
+st.font: FiraCode:pixelsize=12:antialias=true:autohint=true:style=regular;
 
 st.borderpx: 4
 st.xfps: 144
 st.actionfps: 144
 st.cursorshape: 2
 st.shell: /bin/fish
+Xft.dpi: 96
 
 
 

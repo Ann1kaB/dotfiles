@@ -1,8 +1,14 @@
 #!/bin/bash
-FAN_MODE=$(cat /sys/devices/platform/faustus/throttle_thermal_policy)
+FAN_MODE=$(cat /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy)
+
+switch_fan_mode() {
+	xsetroot -name "Current Fan Mode: $_mode"
+	echo "$_mode"
+}
+
 case $FAN_MODE in 
-	1) xsetroot -name "Current Fan Mode: TURBO"  ;;
-	2) xsetroot -name "Current Fan Mode: SILENT" ;;
-	0) xsetroot -name "Current Fan Mode: NORMAL" ;;
+	1) _mode="Turbo" && switch_fan_mode;;
+	2) _mode="Silent" && switch_fan_mode;;
+	0) _mode="Normal" && switch_fan_mode;;
 	*) xsetroot -name "ERROR: Failed to get current Fan Mode!"
 esac

@@ -1,38 +1,22 @@
 #!/bin/bash
 
 STATUS=$(cat /sys/class/power_supply/BAT1/status)
+CURRENT_TDP_FILE="/tmp/_set_tdp_current"
+ryzenadj_command=$(ryzenadj --info | awk '/ stapm-limit/{print $5}'| cut -d'.' -f1)
 
-if [[ "$STATUS" = "Discharging" ]]; then
-	case $(ryzenadj --info | awk '/ slow-limit/{print $6}'| cut -d'.' -f1) in
-		12) cpupower frequency-set -g ondemand
-		ryzenadj --stapm-limit=30000 --fast-limit=30000 --slow-limit=30000
-		xsetroot -name "Setting TDP to 30W" ;;
-		30) ryzenadj --stapm-limit=25000 --fast-limit=25000 --slow-limit=25000
-		xsetroot -name "Setting TDP to 25W" ;;
-		*)
-		# TDP 1
-		ryzenadj --stapm-limit=12000 --fast-limit=12000 --slow-limit=12000
-		xsetroot -name "Setting TDP to 12W(default)" ;;
-	esac
+set_ryzenadj_tdp() {
+	ryzenadj --stapm-limit=${_stapm}000 --fast-limit=${_fast}000 --slow-limit=${_slow}000
+	xsetroot -name "Setting TDP to ${_stapm}W$_addition"
+}
 
-elif [[ "$STATUS" =~ Charging|Full|Unknown  ]]; then
-	case $(ryzenadj --info | awk '/ slow-limit/{print $6}'| cut -d'.' -f1) in
-		25)
-		ryzenadj --stapm-limit=45000 --fast-limit=40000 --slow-limit=40000
-		xsetroot -name "Setting TDP to 40W" ;;
-		40)
-		# TDP 3
-		ryzenadj --stapm-limit=50000 --fast-limit=55000 --slow-limit=45000
-		xsetroot -name "Setting TDP to 45W" ;;
-		45)
-		# TDP 4
-		ryzenadj --stapm-limit=60000 --fast-limit=70000 --slow-limit=65000
-		xsetroot -name "Setting TDP to 65W" ;;
-		*)
-		# TDP 1
-		ryzenadj --stapm-limit=30000 --fast-limit=35000 --slow-limit=25000
-		xsetroot -name "Setting TDP to 25W" ;;
-	esac
-else 
-	xsetroot -name "TDP: UNKNOWN ERROR OCCURED"
-fi
+case $ryzenadj_command in
+	30) _stapm=25 _fast=25 _slow=25 && set_ryzenadj_tdp;;
+	25) _stapm=20 _fast=20 _slow=20 && set_ryzenadj_tdp;;
+	20) _stapm=15 _fast=15 _slow=15 && set_ryzenadj_tdp;;
+	15) _stapm=12 _fast=12 _slow=12 _addition="(Battery Default)" && set_ryzenadj_tdp;;
+	12) [ "$STATUS" != "Discharging" ] && _stapm=45 _fast=62 _slow=54 _addition="(Default)" || \
+	_stapm=30 _fast=30 _slow=30 && set_ryzenadj_tdp;;
+	*) _stapm=30 _fast=30 _slow=30 && set_ryzenadj_tdp;;
+esac
+
+echo "${_stapm}" > $CURRENT_TDP_FILE

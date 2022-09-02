@@ -6,20 +6,84 @@ CPU=$(cat /proc/cpuinfo | grep MHz | cut -d' ' -f3 | jq -s add/length | cut -d '
 | sed 's/..$//;s/./&./')
 #CPU_USAGE=$(grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage "%"}' | cut -d'.' -f1)
 MEM=$(free -h | awk '/^Mem:/ {print $3}' | sed 's/Gi/GB/g')
-CPUFAN=$(cat /sys/devices/platform/faustus/hwmon/hwmon5/fan1_input)
+CPUFAN=$(cat /sys/devices/platform/asus-nb-wmi/hwmon/hwmon*/fan1_input)
+NVGPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $7}' |\
+sed 's/C/°C/')
+NVGPU_TDP=$(nvidia-smi -q | egrep 'Power Draw' | awk '{print $4}')
 
-_name="MEM:$MEM // CPU:$CPUTEMP/${CPU}GHz/FAN:${CPUFAN}RPM" 
+[ -f /tmp/_volume_current_sink ] && source /tmp/_volume_current_sink
+[ -z $sel_icon_name ] && sel_icon_name="audio-card-analog-pci" && sel_num="@DEFAULT_SINK@"
+case $sel_icon_name in
+	"audio-headset-bluetooth") sink_icon="" ;;
+	"audio-card-analog-pci") 
+		sink_vol=$(pactl get-sink-volume $sel_num | cut -d'/' -f2 | head -n 1 | sed 's/^  //;s/%//')
+		if [[ $sink_vol -le 25 ]]; then
+			sink_icon="" 
+		elif [[ $sink_vol -le 50 ]]; then
+			sink_icon=""
+		else
+			sink_icon=""
+		fi ;;
+esac
 
-if [ $(cat /sys/class/power_supply/BAT1/status) != "Discharging" ]; then
 
-	NVGPUTEMP=$(nvidia-smi | awk '{print $3}' | xargs | awk '{print $7}' |\
-	sed 's/C/°C/')
-	NVGPU=$(nvidia-smi -q | egrep 'Used|Total|Graphics|Power Draw' |\
-	awk '/:/ {print $3,$4}' | sed -n '1p;8p;2p;6p;5p' | xargs |\
-	awk '{print $3"MB/"$1"GB" "/" $7"MHz" "/" $6"W"}' |\
-	sed 's/MB\/GB\/MHz/OFF/;s/^/\//;s/6144/6.1/')
-	_name="MEM:$MEM // CPU:$CPUTEMP/${CPU}GHz/FAN:${CPUFAN}RPM/GPU:$NVGPUTEMP$NVGPU" 
+get_icon() {
+  if [ $sel_bat_stat != "Full" ]; then
+          if [[ $sel_bat -le 10 ]]; then
+                  bat_icon=""
+		  echo 10
+          elif [[ $sel_bat -le 25 ]]; then
+                  bat_icon=""
+		  echo 25
+          elif [[ $sel_bat -le 50 ]]; then
+                  bat_icon=""
+		  echo 50
+          elif [[ $sel_bat -le 75 ]]; then
+                  bat_icon=""
+		  echo 75
+          else
+                  bat_icon=""
+		  echo 100
+          fi
+  
+  elif [ $sel_bat_stat = "Charging" ]; then
+          bat_icon=""
+  else
+          bat_icon=""
+  fi
+
+}
+[ ! -z "$(bluetoothctl devices Connected)" ] && BT_DEV=""
+
+if [ ! -z $(cat /sys/class/power_supply/BAT1/capacity) ]; then
+	BAT=$(cat /sys/class/power_supply/BAT1/capacity)
+	BAT_STATUS=$(cat /sys/class/power_supply/BAT1/status)
+	sel_bat=$BAT
+	sel_bat_stat=$BAT_STATUS
+	get_icon
+	bat1_icon=$bat_icon
 fi
+
+if [ ! -z $(cat /sys/class/power_supply/sony_controller_battery_*/capacity) ]; then
+	DS4_CONTROLLER_BATS="$(cat /sys/class/power_supply/sony_controller_battery_*/capacity)"
+	DS4_CONTROLLER_BAT_BAR=" $(cat /sys/class/power_supply/sony_controller_battery_*/capacity)% "
+	sel_bat=$DS4_CONTROLLER_BATS
+	sel_bat_stat=$(cat /sys/class/power_supply/sony_controller_battery_*/status)
+	get_icon
+	ds4_bat_icon=$bat_icon
+fi
+
+if [ ! -z $(bluetoothctl info AC:12:2F:E6:18:57 | awk '/Battery Percentage/{print $4}' | sed 's/[\(\)]//g') ]; then
+	BTHP_BAT="$(bluetoothctl info AC:12:2F:E6:18:57 | awk '/Battery Percentage/{print $4}' | sed 's/[\(\)]//g')"
+	BTHP_BAT_BAR=" $(bluetoothctl info AC:12:2F:E6:18:57 | awk '/Battery Percentage/{print $4}' | sed 's/[\(\)]//g')% "
+	sel_bat=$BTHP_BAT
+	sel_bat_stat="Discharging"
+	get_icon
+	bt_bat_icon=$bat_icon
+fi
+
+CPUTDP=$(sudo ryzenadj -i| grep "PPT VALUE FAST" | awk '{print $6}' | cut -d'.' -f1)
+ _name="${sel_desc:0:24}$sink_icon $MEM $CPUTEMP $NVGPUTEMP ${CPUTDP}W ${NVGPU_TDP}W ${CPU}GHz ${CPUFAN}RPM ${BAT}% $bat1_icon $BT_DEV${DS4_CONTROLLER_BAT_BAR}${ds4_bat_icon}${BTHP_BAT_BAR}${bt_bat_icon}" 
 
 
 

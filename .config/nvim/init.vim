@@ -54,5 +54,5 @@ let g:ycm_autoclose_preview_window_after_completion=1
 map <leader>g  :YcmCompleter GoToDefinitionElseDeclaration<CR>
 let python_highlight_all=1
 syntax on
-autocmd vimenter * NERDTree
+"autocmd vimenter * NERDTree
 tnoremap <Esc> <C-\><C-n>
